@@ -45,20 +45,27 @@ end
 
 IO.puts("")
 
-# Multiple exchanges (simulating a conversation)
+# Multiple exchanges (simulating a conversation about Elixir/OTP)
 IO.puts("3. Multiple exchanges:")
 IO.puts(String.duplicate("-", 40))
 
+# System prompt establishes context for the entire conversation
+elixir_system_prompt = """
+You are an Elixir/OTP expert. Answer questions about Elixir programming,
+OTP patterns like GenServer, Supervisor, and the BEAM VM.
+Keep answers concise (2-3 sentences max).
+"""
+
 questions = [
-  "What is a GenServer?",
-  "What is a Supervisor?",
-  "How do they work together?"
+  "What is a GenServer in Elixir?",
+  "What is an OTP Supervisor?",
+  "How do GenServers and Supervisors work together in OTP?"
 ]
 
 Enum.reduce(questions, router, fn question, router ->
   IO.puts("\nQ: #{question}")
 
-  case Router.execute(router, :text, question, system_prompt: "Answer in 2 sentences max.") do
+  case Router.execute(router, :text, question, system_prompt: elixir_system_prompt) do
     {:ok, response, new_router} ->
       IO.puts("A: #{response}")
       new_router

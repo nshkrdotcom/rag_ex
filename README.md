@@ -18,11 +18,32 @@ A library to build RAG (Retrieval Augmented Generation) systems in Elixir with m
 
 ## Features
 
+### Core LLM Capabilities
 - **Multi-LLM Provider Support**: Gemini, Claude, Codex (OpenAI-compatible), and Ollama
 - **Smart Routing**: Fallback, round-robin, and specialist routing strategies
-- **Vector Store**: pgvector integration with semantic, full-text, and hybrid search
-- **Embedding Service**: GenServer-based embedding management with batching
-- **Agent Framework**: Tool-using agents with session memory
+- **Streaming Responses**: Real-time streaming for supported providers
+
+### Modular RAG Architecture (v0.3.0)
+- **Retriever Behaviours**: Pluggable retrieval with Semantic, FullText, Hybrid, and Graph implementations
+- **VectorStore Behaviours**: Pluggable vector backends with pgvector implementation
+- **Reranker Behaviours**: LLM-based and passthrough reranking
+- **Pipeline System**: Composable RAG pipelines with parallel execution and caching
+
+### GraphRAG Support (v0.3.0)
+- **Entity Extraction**: LLM-based entity and relationship extraction
+- **Knowledge Graph Storage**: PostgreSQL-based graph with Entity, Edge, Community schemas
+- **Community Detection**: Label propagation algorithm for entity clustering
+- **Graph Retrieval**: Local, global, and hybrid graph search modes
+
+### Advanced Chunking (v0.3.0)
+- **Character-based**: Fixed-size chunks with smart boundaries
+- **Sentence-based**: NLP-aware sentence splitting
+- **Paragraph-based**: Preserve document structure
+- **Recursive**: Hierarchical splitting for complex documents
+- **Semantic**: Embedding-based similarity chunking
+
+### Agent Framework
+- **Tool-using Agents**: Session memory and tool registration
 - **Built-in Tools**: Repository search, file reading, context retrieval, code analysis
 
 ## Introduction to RAG
@@ -185,6 +206,246 @@ long_text = File.read!("large_document.md")
 chunks = VectorStore.chunk_text(long_text, max_chars: 500, overlap: 50)
 ```
 
+## Advanced Chunking Strategies (v0.3.0)
+
+Use the `Rag.Chunking` module for flexible text splitting:
+
+```elixir
+alias Rag.Chunking
+
+text = File.read!("document.md")
+
+# Character-based chunking with smart boundaries
+chunks = Chunking.chunk_by_characters(text, chunk_size: 500, overlap: 50)
+
+# Sentence-based chunking
+chunks = Chunking.chunk_by_sentences(text, sentences_per_chunk: 5)
+
+# Paragraph-based chunking
+chunks = Chunking.chunk_by_paragraphs(text, max_paragraphs: 3)
+
+# Recursive chunking (hierarchical)
+chunks = Chunking.chunk_recursive(text,
+  chunk_size: 1000,
+  separators: ["\n\n", "\n", ". ", " "]
+)
+
+# Semantic chunking (requires embeddings)
+embed_fn = fn texts ->
+  {:ok, embeddings, _} = Router.execute(router, :embeddings, texts, [])
+  embeddings
+end
+chunks = Chunking.chunk_semantic(text, embed_fn, similarity_threshold: 0.8)
+```
+
+## Retriever Behaviours (v0.3.0)
+
+Pluggable retrieval strategies using the `Rag.Retriever` behaviour:
+
+```elixir
+alias Rag.Retriever
+alias Rag.Retriever.{Semantic, FullText, Hybrid}
+
+# Semantic retrieval (vector similarity)
+retriever = %Semantic{repo: MyApp.Repo}
+{:ok, results} = Retriever.retrieve(retriever, embedding: query_embedding, limit: 10)
+
+# Full-text retrieval (PostgreSQL tsvector)
+retriever = %FullText{repo: MyApp.Repo}
+{:ok, results} = Retriever.retrieve(retriever, query: "elixir genserver", limit: 10)
+
+# Hybrid retrieval (RRF fusion)
+retriever = %Hybrid{
+  semantic: %Semantic{repo: MyApp.Repo},
+  fulltext: %FullText{repo: MyApp.Repo},
+  semantic_weight: 0.7,
+  fulltext_weight: 0.3
+}
+{:ok, results} = Retriever.retrieve(retriever,
+  query: "elixir genserver",
+  embedding: query_embedding,
+  limit: 10
+)
+```
+
+## Reranking (v0.3.0)
+
+Improve retrieval quality with LLM-based reranking:
+
+```elixir
+alias Rag.Reranker
+alias Rag.Reranker.LLM
+
+# Create an LLM reranker
+reranker = %LLM{router: router}
+
+# Rerank retrieved documents
+{:ok, reranked} = Reranker.rerank(reranker, query, documents, top_k: 5)
+
+# Passthrough reranker (no-op, for testing)
+reranker = %Rag.Reranker.Passthrough{}
+{:ok, same_docs} = Reranker.rerank(reranker, query, documents, top_k: 5)
+```
+
+## Pipeline System (v0.3.0)
+
+Build composable RAG pipelines with the `Rag.Pipeline` module:
+
+```elixir
+alias Rag.Pipeline
+alias Rag.Pipeline.{Context, Executor}
+
+# Define pipeline steps
+pipeline = %Pipeline{
+  name: "rag_pipeline",
+  steps: [
+    %Pipeline.Step{
+      name: :chunk,
+      function: fn ctx ->
+        chunks = Chunking.chunk_by_sentences(ctx.input, sentences_per_chunk: 5)
+        {:ok, Context.put(ctx, :chunks, chunks)}
+      end
+    },
+    %Pipeline.Step{
+      name: :embed,
+      function: fn ctx ->
+        chunks = Context.get(ctx, :chunks)
+        {:ok, embeddings, _} = Router.execute(router, :embeddings, chunks, [])
+        {:ok, Context.put(ctx, :embeddings, embeddings)}
+      end,
+      depends_on: [:chunk]
+    },
+    %Pipeline.Step{
+      name: :retrieve,
+      function: fn ctx ->
+        {:ok, results} = Retriever.retrieve(retriever, embedding: ctx.query_embedding, limit: 10)
+        {:ok, Context.put(ctx, :results, results)}
+      end
+    },
+    %Pipeline.Step{
+      name: :generate,
+      function: fn ctx ->
+        results = Context.get(ctx, :results)
+        prompt = build_prompt(ctx.query, results)
+        {:ok, response, _} = Router.execute(router, :text, prompt, [])
+        {:ok, Context.put(ctx, :response, response)}
+      end,
+      depends_on: [:retrieve]
+    }
+  ]
+}
+
+# Execute the pipeline
+context = Context.new(input: document, query: "What is GenServer?")
+{:ok, result_ctx} = Executor.run(pipeline, context)
+response = Context.get(result_ctx, :response)
+```
+
+### Pipeline Features
+
+- **Parallel Execution**: Independent steps run concurrently
+- **ETS Caching**: Cache step results for reuse
+- **Retry Logic**: Configurable retries with backoff
+- **Telemetry**: Built-in observability hooks
+
+## GraphRAG (v0.3.0)
+
+Build knowledge graphs from documents for enhanced retrieval:
+
+### Entity & Relationship Extraction
+
+```elixir
+alias Rag.GraphRAG.Extractor
+alias Rag.GraphStore
+alias Rag.GraphStore.Pgvector
+
+{:ok, router} = Router.new(providers: [:gemini])
+
+# Extract entities and relationships from text
+text = "Alice works for Acme Corp in New York. Bob reports to Alice."
+{:ok, result} = Extractor.extract(text, router: router)
+
+# result contains:
+# - entities: [%{name: "Alice", type: "person", ...}, ...]
+# - relationships: [%{source: "Bob", target: "Alice", type: "reports_to", ...}, ...]
+```
+
+### Graph Storage
+
+```elixir
+# Initialize graph store
+store = %Pgvector{repo: MyApp.Repo}
+
+# Create entities
+{:ok, alice} = GraphStore.create_node(store, %{
+  type: :person,
+  name: "Alice",
+  properties: %{role: "manager"},
+  embedding: alice_embedding
+})
+
+{:ok, acme} = GraphStore.create_node(store, %{
+  type: :organization,
+  name: "Acme Corp",
+  properties: %{industry: "tech"}
+})
+
+# Create relationships
+{:ok, edge} = GraphStore.create_edge(store, %{
+  from_id: alice.id,
+  to_id: acme.id,
+  type: :works_for,
+  weight: 1.0
+})
+
+# Graph traversal
+{:ok, nodes} = GraphStore.traverse(store, alice.id, max_depth: 2, algorithm: :bfs)
+
+# Vector search on entities
+{:ok, similar} = GraphStore.vector_search(store, query_embedding, limit: 5)
+```
+
+### Community Detection
+
+```elixir
+alias Rag.GraphRAG.CommunityDetector
+
+# Detect communities using label propagation
+{:ok, communities} = CommunityDetector.detect(store, max_iterations: 10)
+
+# Create community with summary
+{:ok, community} = GraphStore.create_community(store, %{
+  level: 0,
+  entity_ids: [alice.id, bob.id, carol.id],
+  summary: "Engineering team members"
+})
+```
+
+### Graph-based Retrieval
+
+```elixir
+alias Rag.Retriever.Graph
+
+# Local search (entity neighborhood)
+retriever = %Graph{store: store, mode: :local}
+{:ok, results} = Retriever.retrieve(retriever,
+  embedding: query_embedding,
+  limit: 10
+)
+
+# Global search (community summaries)
+retriever = %Graph{store: store, mode: :global}
+{:ok, results} = Retriever.retrieve(retriever, query: "engineering team", limit: 5)
+
+# Hybrid (combines local + global)
+retriever = %Graph{store: store, mode: :hybrid}
+{:ok, results} = Retriever.retrieve(retriever,
+  query: "engineering team",
+  embedding: query_embedding,
+  limit: 10
+)
+```
+
 ## Embedding Service
 
 Use the GenServer for managed embedding operations:
@@ -299,9 +560,9 @@ session = session
 messages = Session.to_messages(session)
 ```
 
-## Database Migration
+## Database Migrations
 
-Create the chunks table for pgvector:
+### Chunks Table (Vector Store)
 
 ```bash
 mix ecto.gen.migration create_rag_chunks
@@ -322,7 +583,6 @@ defmodule MyApp.Repo.Migrations.CreateRagChunks do
       timestamps()
     end
 
-    # Indexes for search performance
     execute """
     CREATE INDEX rag_chunks_embedding_idx
     ON rag_chunks
@@ -339,6 +599,70 @@ defmodule MyApp.Repo.Migrations.CreateRagChunks do
 
   def down do
     drop table(:rag_chunks)
+  end
+end
+```
+
+### GraphRAG Tables (v0.3.0)
+
+```bash
+mix ecto.gen.migration create_graph_tables
+```
+
+```elixir
+defmodule MyApp.Repo.Migrations.CreateGraphTables do
+  use Ecto.Migration
+
+  def up do
+    # Entities (nodes)
+    create table(:graph_entities) do
+      add :type, :string, null: false
+      add :name, :string, null: false
+      add :properties, :map, default: %{}
+      add :embedding, :vector, size: 768
+      add :source_chunk_ids, {:array, :integer}, default: []
+      timestamps()
+    end
+
+    create index(:graph_entities, [:type])
+    create index(:graph_entities, [:name])
+
+    execute """
+    CREATE INDEX graph_entities_embedding_idx
+    ON graph_entities
+    USING ivfflat (embedding vector_l2_ops)
+    WITH (lists = 100)
+    """
+
+    # Edges (relationships)
+    create table(:graph_edges) do
+      add :from_id, references(:graph_entities, on_delete: :delete_all), null: false
+      add :to_id, references(:graph_entities, on_delete: :delete_all), null: false
+      add :type, :string, null: false
+      add :weight, :float, default: 1.0
+      add :properties, :map, default: %{}
+      timestamps()
+    end
+
+    create index(:graph_edges, [:from_id])
+    create index(:graph_edges, [:to_id])
+    create index(:graph_edges, [:type])
+
+    # Communities (clusters)
+    create table(:graph_communities) do
+      add :level, :integer, default: 0
+      add :summary, :text
+      add :entity_ids, {:array, :integer}, default: []
+      timestamps()
+    end
+
+    create index(:graph_communities, [:level])
+  end
+
+  def down do
+    drop table(:graph_communities)
+    drop table(:graph_edges)
+    drop table(:graph_entities)
   end
 end
 ```
@@ -368,6 +692,36 @@ Capabilities.supports?(:gemini, :embeddings)  # true
 Capabilities.supports?(:gemini, :streaming)   # true
 Capabilities.get_models(:claude)              # ["claude-sonnet-4-20250514", ...]
 ```
+
+## Examples
+
+The `examples/` directory contains runnable examples for all major features:
+
+| Example | Description |
+|---------|-------------|
+| `basic_chat.exs` | Simple LLM interaction with Router |
+| `routing_strategies.exs` | Multi-provider routing strategies |
+| `multi_llm_router.exs` | Comprehensive Router demonstration |
+| `agent.exs` | Agent framework with tool usage |
+| `chunking_strategies.exs` | All 5 chunking strategies |
+| `vector_store.exs` | In-memory vector store |
+| `basic_rag.exs` | Complete RAG workflow with DB |
+| `hybrid_search.exs` | Semantic + full-text + RRF fusion |
+| `graph_rag.exs` | GraphRAG with entity extraction |
+| `pipeline_example.exs` | Pipeline system with parallel execution |
+
+```bash
+# Run a single example
+mix run examples/basic_chat.exs
+
+# Run all examples
+./examples/run_all.sh
+
+# Run without database examples
+./examples/run_all.sh --skip-db
+```
+
+See [examples/README.md](examples/README.md) for detailed documentation.
 
 ## Links
 

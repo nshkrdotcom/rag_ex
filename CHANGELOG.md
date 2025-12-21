@@ -3,6 +3,30 @@
 ## v0.3.0 (2025-12-21)
 
 ### Major Features
+* **Modular RAG Architecture**: Complete overhaul for configurable RAG pipelines
+  * `Rag.Retriever` behaviour with Semantic, FullText, Hybrid, and Graph implementations
+  * `Rag.VectorStore.Store` behaviour for pluggable vector backends
+  * `Rag.GraphStore` behaviour for knowledge graph storage (pgvector and Neo4j ready)
+  * `Rag.Reranker` behaviour with LLM-based reranking
+* **GraphRAG Support**: Knowledge graph-enhanced retrieval
+  * Entity and relationship extraction via LLM
+  * Community detection with summarization
+  * Local, global, and hybrid graph search modes
+  * PostgreSQL-based graph storage with recursive CTEs
+* **Advanced Chunking Strategies**: Flexible text splitting
+  * Character-based chunking with smart boundaries
+  * Sentence-based chunking
+  * Semantic chunking with embedding similarity
+  * Recursive chunking for hierarchical documents
+* **Pipeline System**: Composable RAG pipelines
+  * `Rag.Pipeline` struct for pipeline definitions
+  * `Rag.Pipeline.Executor` for step orchestration
+  * Parallel step execution with caching
+  * Error handling and retry logic
+* **Reranking**: Improve retrieval quality
+  * LLM-based reranking with configurable prompts
+  * Cross-encoder style relevance scoring
+  * Cohere reranker integration ready
 * **Multi-LLM Provider Support**: Add `Rag.Ai.Gemini`, `Rag.Ai.Claude`, and `Rag.Ai.Codex` providers for Gemini, Claude, and OpenAI-compatible APIs
 * **Smart Router**: New `Rag.Router` module with pluggable routing strategies:
   * `Rag.Router.Fallback` - Try providers in order until one succeeds
@@ -25,6 +49,11 @@
   * `Rag.Agent.Tools.GetRepoContext` - Get repository structure and metadata
   * `Rag.Agent.Tools.AnalyzeCode` - Parse and analyze code structure
 * **Provider Capabilities**: New `Rag.Ai.Capabilities` module to check provider feature support
+
+### Enhancements
+* New live examples for all major features
+* Comprehensive test coverage with supertester principles
+* Updated documentation with modular RAG guides
 
 ### Breaking Changes
 * Removed igniter-based Mix tasks: `rag.install`, `rag.gen_rag_module`, `rag.gen_servings`, `rag.gen_eval`

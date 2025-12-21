@@ -2,6 +2,9 @@ Application.ensure_all_started(:mimic)
 Mimic.copy(Nx.Serving)
 Mimic.copy(Req)
 Mimic.copy(Rag.Ai.Gemini)
+Mimic.copy(Rag.Router)
+Mimic.copy(Rag.Repo)
+Mimic.copy(Rag.GraphStoreTest.MockRepo)
 
 # Build exclusion list based on available credentials
 exclusions = [:integration_test, :integration]
