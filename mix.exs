@@ -39,9 +39,9 @@ defmodule Rag.MixProject do
       {:telemetry, "~> 1.0"},
 
       # LLM providers - all optional
-      {:gemini_ex, path: "../gemini_ex"},
-      {:codex_sdk, path: "../codex_sdk", optional: true},
-      {:claude_agent_sdk, path: "../claude_agent_sdk", optional: true},
+      {:gemini_ex, "~> 0.8.6"},
+      {:codex_sdk, "~> 0.4.2", optional: true},
+      {:claude_agent_sdk, "~> 0.6.8", optional: true},
 
       # Vector store and search
       # TODO: Re-enable Torus once inflex dependency is fixed for Elixir 1.18
