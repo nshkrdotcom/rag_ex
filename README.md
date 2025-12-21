@@ -723,10 +723,29 @@ mix run examples/basic_chat.exs
 
 See [examples/README.md](examples/README.md) for detailed documentation.
 
+## Guides
+
+Comprehensive guides are available for all major features:
+
+| Guide | Description |
+|-------|-------------|
+| [Getting Started](guides/getting_started.md) | Installation and first steps |
+| [LLM Providers](guides/providers.md) | Gemini, Claude, Codex, and more |
+| [Smart Router](guides/router.md) | Multi-provider routing strategies |
+| [Vector Store](guides/vector_store.md) | Document storage with pgvector |
+| [Embeddings](guides/embeddings.md) | Embedding generation service |
+| [Chunking Strategies](guides/chunking.md) | Text splitting approaches |
+| [Retrievers](guides/retrievers.md) | Semantic, fulltext, hybrid, graph |
+| [Rerankers](guides/rerankers.md) | LLM-based result reranking |
+| [Pipelines](guides/pipelines.md) | Composable RAG workflows |
+| [GraphRAG](guides/graph_rag.md) | Knowledge graph-based RAG |
+| [Agent Framework](guides/agent_framework.md) | Tool-using agents |
+
 ## Links
 
 - [HexDocs](https://hexdocs.pm/rag)
 - [Getting Started Notebook](/notebooks/getting_started.livemd)
+- [Guides](/guides/getting_started.md)
 
 ---
 

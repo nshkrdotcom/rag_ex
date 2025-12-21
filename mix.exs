@@ -64,7 +64,7 @@ defmodule Rag.MixProject do
     [
       maintainers: ["@bitcrowd", "Joel Koch"],
       licenses: ["MIT"],
-      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE assets),
+      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE assets guides),
       links: %{
         GitHub: @source_url
       }
@@ -79,9 +79,91 @@ defmodule Rag.MixProject do
       assets: %{"assets" => "assets"},
       logo: "assets/rag.svg",
       extras: [
-        {"README.md", title: "README"},
+        {"README.md", title: "Overview"},
         "CHANGELOG.md",
-        "notebooks/getting_started.livemd"
+        "notebooks/getting_started.livemd",
+        # Guides
+        {"guides/getting_started.md", title: "Getting Started"},
+        {"guides/providers.md", title: "LLM Providers"},
+        {"guides/router.md", title: "Smart Router"},
+        {"guides/vector_store.md", title: "Vector Store"},
+        {"guides/embeddings.md", title: "Embeddings"},
+        {"guides/chunking.md", title: "Chunking Strategies"},
+        {"guides/retrievers.md", title: "Retrievers"},
+        {"guides/rerankers.md", title: "Rerankers"},
+        {"guides/pipelines.md", title: "Pipelines"},
+        {"guides/graph_rag.md", title: "GraphRAG"},
+        {"guides/agent_framework.md", title: "Agent Framework"}
+      ],
+      groups_for_extras: [
+        Guides: ~r/guides\/.*/
+      ],
+      groups_for_modules: [
+        Core: [
+          Rag,
+          Rag.Router,
+          Rag.VectorStore,
+          Rag.Chunking,
+          Rag.Pipeline,
+          Rag.Retriever,
+          Rag.Reranker
+        ],
+        "LLM Providers": [
+          Rag.Ai.Provider,
+          Rag.Ai.Capabilities,
+          Rag.Ai.Gemini,
+          Rag.Ai.Claude,
+          Rag.Ai.Codex,
+          Rag.Ai.OpenAI,
+          Rag.Ai.Cohere,
+          Rag.Ai.Ollama,
+          Rag.Ai.Nx
+        ],
+        "Router Strategies": [
+          Rag.Router.Strategy,
+          Rag.Router.Fallback,
+          Rag.Router.RoundRobin,
+          Rag.Router.Specialist
+        ],
+        "Vector Store": [
+          Rag.VectorStore.Chunk,
+          Rag.VectorStore.Store,
+          Rag.VectorStore.Pgvector,
+          Rag.Embedding.Service
+        ],
+        Retrievers: [
+          Rag.Retriever.Semantic,
+          Rag.Retriever.FullText,
+          Rag.Retriever.Hybrid,
+          Rag.Retriever.Graph
+        ],
+        Rerankers: [
+          Rag.Reranker.LLM,
+          Rag.Reranker.Passthrough
+        ],
+        Pipeline: [
+          Rag.Pipeline.Context,
+          Rag.Pipeline.Executor
+        ],
+        GraphRAG: [
+          Rag.GraphStore,
+          Rag.GraphStore.Entity,
+          Rag.GraphStore.Edge,
+          Rag.GraphStore.Community,
+          Rag.GraphStore.Pgvector,
+          Rag.GraphRAG.Extractor,
+          Rag.GraphRAG.CommunityDetector
+        ],
+        "Agent Framework": [
+          Rag.Agent.Agent,
+          Rag.Agent.Session,
+          Rag.Agent.Registry,
+          Rag.Agent.Tool,
+          Rag.Agent.Tools.ReadFile,
+          Rag.Agent.Tools.AnalyzeCode,
+          Rag.Agent.Tools.SearchRepos,
+          Rag.Agent.Tools.GetRepoContext
+        ]
       ]
     ]
   end
