@@ -8,6 +8,8 @@ on:
 
 env:
   MIX_ENV: test
+  ELIXIR_VERSION: "1.17"
+  OTP_VERSION: "27"
 
 jobs:
   test:
@@ -20,8 +22,44 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.17"
-          otp-version: "27"
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: deps-${{ runner.os }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: deps-${{ runner.os }}-
+
+      - name: Cache _build
+        uses: actions/cache@v4
+        with:
+          path: _build
+          key: build-${{ runner.os }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: build-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Compile
+        run: mix compile --warnings-as-errors
+
+      - name: Run tests
+        run: mix test
+
+  dialyzer:
+    name: Dialyzer
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
 
       - name: Cache deps
         uses: actions/cache@v4
@@ -48,10 +86,7 @@ jobs:
         run: mix deps.get
 
       - name: Compile
-        run: mix compile --warnings-as-errors
-
-      - name: Run tests
-        run: mix test
+        run: mix compile
 
       - name: Run Dialyzer
         run: mix dialyzer

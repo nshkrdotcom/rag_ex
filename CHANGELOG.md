@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v0.3.2 (2025-12-21)
+
+### Fixes
+* Extended conditional compilation to all Ecto-dependent modules:
+  - `Rag.Retriever.Semantic`, `Rag.Retriever.FullText`, `Rag.Retriever.Hybrid`
+  - `Rag.Embedding.Service`
+* Eliminates all warnings when using rag_ex without Ecto
+
 ## v0.3.1 (2025-12-21)
 
 ### Fixes

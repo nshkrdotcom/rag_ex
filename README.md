@@ -25,19 +25,19 @@ A library to build RAG (Retrieval Augmented Generation) systems in Elixir with m
 - **Smart Routing**: Fallback, round-robin, and specialist routing strategies
 - **Streaming Responses**: Real-time streaming for supported providers
 
-### Modular RAG Architecture (v0.3.1)
+### Modular RAG Architecture (v0.3.2)
 - **Retriever Behaviours**: Pluggable retrieval with Semantic, FullText, Hybrid, and Graph implementations
 - **VectorStore Behaviours**: Pluggable vector backends with pgvector implementation
 - **Reranker Behaviours**: LLM-based and passthrough reranking
 - **Pipeline System**: Composable RAG pipelines with parallel execution and caching
 
-### GraphRAG Support (v0.3.1)
+### GraphRAG Support (v0.3.2)
 - **Entity Extraction**: LLM-based entity and relationship extraction
 - **Knowledge Graph Storage**: PostgreSQL-based graph with Entity, Edge, Community schemas
 - **Community Detection**: Label propagation algorithm for entity clustering
 - **Graph Retrieval**: Local, global, and hybrid graph search modes
 
-### Advanced Chunking (v0.3.1)
+### Advanced Chunking (v0.3.2)
 - **Character-based**: Fixed-size chunks with smart boundaries
 - **Sentence-based**: NLP-aware sentence splitting
 - **Paragraph-based**: Preserve document structure
@@ -66,7 +66,7 @@ Add `rag_ex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:rag_ex, "~> 0.3.0"}
+    {:rag_ex, "~> 0.3.2"}
   ]
 end
 ```
@@ -208,7 +208,7 @@ long_text = File.read!("large_document.md")
 chunks = VectorStore.chunk_text(long_text, max_chars: 500, overlap: 50)
 ```
 
-## Advanced Chunking Strategies (v0.3.0)
+## Advanced Chunking Strategies (v0.3.2)
 
 Use the `Rag.Chunking` module for flexible text splitting:
 
@@ -240,7 +240,7 @@ end
 chunks = Chunking.chunk_semantic(text, embed_fn, similarity_threshold: 0.8)
 ```
 
-## Retriever Behaviours (v0.3.0)
+## Retriever Behaviours (v0.3.2)
 
 Pluggable retrieval strategies using the `Rag.Retriever` behaviour:
 
@@ -270,7 +270,7 @@ retriever = %Hybrid{
 )
 ```
 
-## Reranking (v0.3.0)
+## Reranking (v0.3.2)
 
 Improve retrieval quality with LLM-based reranking:
 
@@ -289,7 +289,7 @@ reranker = %Rag.Reranker.Passthrough{}
 {:ok, same_docs} = Reranker.rerank(reranker, query, documents, top_k: 5)
 ```
 
-## Pipeline System (v0.3.0)
+## Pipeline System (v0.3.2)
 
 Build composable RAG pipelines with the `Rag.Pipeline` module:
 
@@ -350,7 +350,7 @@ response = Context.get(result_ctx, :response)
 - **Retry Logic**: Configurable retries with backoff
 - **Telemetry**: Built-in observability hooks
 
-## GraphRAG (v0.3.0)
+## GraphRAG (v0.3.2)
 
 Build knowledge graphs from documents for enhanced retrieval:
 
@@ -605,7 +605,7 @@ defmodule MyApp.Repo.Migrations.CreateRagChunks do
 end
 ```
 
-### GraphRAG Tables (v0.3.0)
+### GraphRAG Tables (v0.3.2)
 
 ```bash
 mix ecto.gen.migration create_graph_tables
