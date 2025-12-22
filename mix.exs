@@ -2,7 +2,7 @@ defmodule Rag.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/bitcrowd/rag"
-  @version "0.3.0"
+  @version "0.3.1"
 
   def project do
     [
@@ -46,9 +46,9 @@ defmodule Rag.MixProject do
       # Vector store and search
       # TODO: Re-enable Torus once inflex dependency is fixed for Elixir 1.18
       # {:torus, "~> 0.5.3"},
-      {:pgvector, "~> 0.3.0"},
-      {:ecto_sql, "~> 3.0"},
-      {:postgrex, "~> 0.17"},
+      {:pgvector, "~> 0.3.0", optional: true},
+      {:ecto_sql, "~> 3.0", optional: true},
+      {:postgrex, "~> 0.17", optional: true},
 
       # Dev/test
       # Temporarily disabled due to inflex Elixir 1.18 compatibility issue

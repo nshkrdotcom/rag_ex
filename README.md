@@ -25,19 +25,19 @@ A library to build RAG (Retrieval Augmented Generation) systems in Elixir with m
 - **Smart Routing**: Fallback, round-robin, and specialist routing strategies
 - **Streaming Responses**: Real-time streaming for supported providers
 
-### Modular RAG Architecture (v0.3.0)
+### Modular RAG Architecture (v0.3.1)
 - **Retriever Behaviours**: Pluggable retrieval with Semantic, FullText, Hybrid, and Graph implementations
 - **VectorStore Behaviours**: Pluggable vector backends with pgvector implementation
 - **Reranker Behaviours**: LLM-based and passthrough reranking
 - **Pipeline System**: Composable RAG pipelines with parallel execution and caching
 
-### GraphRAG Support (v0.3.0)
+### GraphRAG Support (v0.3.1)
 - **Entity Extraction**: LLM-based entity and relationship extraction
 - **Knowledge Graph Storage**: PostgreSQL-based graph with Entity, Edge, Community schemas
 - **Community Detection**: Label propagation algorithm for entity clustering
 - **Graph Retrieval**: Local, global, and hybrid graph search modes
 
-### Advanced Chunking (v0.3.0)
+### Advanced Chunking (v0.3.1)
 - **Character-based**: Fixed-size chunks with smart boundaries
 - **Sentence-based**: NLP-aware sentence splitting
 - **Paragraph-based**: Preserve document structure

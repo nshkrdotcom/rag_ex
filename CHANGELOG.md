@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v0.3.1 (2025-12-21)
+
+### Fixes
+* Made Ecto/pgvector dependencies optional - modules using Ecto.Schema and Ecto.Query are now conditionally compiled only when Ecto is available
+* Projects can now use rag_ex without PostgreSQL/Ecto by omitting those dependencies
+
 ## v0.3.0 (2025-12-21)
 
 ### Major Features

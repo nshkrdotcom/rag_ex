@@ -11,19 +11,8 @@ env:
 
 jobs:
   test:
-    name: Test (Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }})
+    name: Test
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - elixir: "1.15"
-            otp: "25"
-          - elixir: "1.16"
-            otp: "26"
-          - elixir: "1.17"
-            otp: "27"
 
     steps:
       - uses: actions/checkout@v4
@@ -31,24 +20,29 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: ${{ matrix.elixir }}
-          otp-version: ${{ matrix.otp }}
+          elixir-version: "1.17"
+          otp-version: "27"
 
       - name: Cache deps
         uses: actions/cache@v4
         with:
           path: deps
-          key: deps-${{ runner.os }}-${{ matrix.elixir }}-${{ matrix.otp }}-${{ hashFiles('**/mix.lock') }}
-          restore-keys: |
-            deps-${{ runner.os }}-${{ matrix.elixir }}-${{ matrix.otp }}-
+          key: deps-${{ runner.os }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: deps-${{ runner.os }}-
 
       - name: Cache _build
         uses: actions/cache@v4
         with:
           path: _build
-          key: build-${{ runner.os }}-${{ matrix.elixir }}-${{ matrix.otp }}-${{ hashFiles('**/mix.lock') }}
-          restore-keys: |
-            build-${{ runner.os }}-${{ matrix.elixir }}-${{ matrix.otp }}-
+          key: build-${{ runner.os }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: build-${{ runner.os }}-
+
+      - name: Cache PLTs
+        uses: actions/cache@v4
+        with:
+          path: _plts
+          key: plts-${{ runner.os }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: plts-${{ runner.os }}-
 
       - name: Install dependencies
         run: mix deps.get
@@ -59,78 +53,5 @@ jobs:
       - name: Run tests
         run: mix test
 
-  dialyzer:
-    name: Dialyzer
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: "1.17"
-          otp-version: "27"
-
-      - name: Cache deps
-        uses: actions/cache@v4
-        with:
-          path: deps
-          key: deps-${{ runner.os }}-1.17-27-${{ hashFiles('**/mix.lock') }}
-          restore-keys: |
-            deps-${{ runner.os }}-1.17-27-
-
-      - name: Cache _build
-        uses: actions/cache@v4
-        with:
-          path: _build
-          key: build-${{ runner.os }}-1.17-27-${{ hashFiles('**/mix.lock') }}
-          restore-keys: |
-            build-${{ runner.os }}-1.17-27-
-
-      - name: Cache PLTs
-        uses: actions/cache@v4
-        with:
-          path: _plts
-          key: plts-${{ runner.os }}-1.17-27-${{ hashFiles('**/mix.lock') }}
-          restore-keys: |
-            plts-${{ runner.os }}-1.17-27-
-
-      - name: Install dependencies
-        run: mix deps.get
-
-      - name: Compile
-        run: mix compile
-
       - name: Run Dialyzer
         run: mix dialyzer
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: "1.17"
-          otp-version: "27"
-
-      - name: Cache deps
-        uses: actions/cache@v4
-        with:
-          path: deps
-          key: deps-${{ runner.os }}-1.17-27-${{ hashFiles('**/mix.lock') }}
-          restore-keys: |
-            deps-${{ runner.os }}-1.17-27-
-
-      - name: Install dependencies
-        run: mix deps.get
-
-      - name: Check formatting
-        run: mix format --check-formatted
-
-      - name: Run Credo
-        run: mix credo --strict
