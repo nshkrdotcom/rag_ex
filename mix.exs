@@ -1,7 +1,7 @@
 defmodule Rag.MixProject do
   use Mix.Project
 
-  @source_url "https://github.com/bitcrowd/rag"
+  @source_url "https://github.com/nshkrdotcom/rag_ex"
   @version "0.3.3"
 
   def project do
@@ -63,7 +63,7 @@ defmodule Rag.MixProject do
   defp package do
     [
       name: "rag_ex",
-      maintainers: ["@bitcrowd", "Joel Koch"],
+      maintainers: ["@nshkrdotcom", "NSHkr"],
       licenses: ["MIT"],
       files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE assets guides),
       links: %{

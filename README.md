@@ -749,10 +749,3 @@ Comprehensive guides are available for all major features:
 - [Getting Started Notebook](/notebooks/getting_started.livemd)
 - [Guides](/guides/getting_started.md)
 
----
-
-Brought to you by [bitcrowd](https://bitcrowd.net/en).
-
-![bitcrowd logo](https://github.com/bitcrowd/rag/blob/main/.github/images/bitcrowd_logo.png?raw=true "bitcrowd logo")
-
-<!-- README END -->
