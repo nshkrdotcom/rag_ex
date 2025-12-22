@@ -105,8 +105,8 @@ defmodule RAGPipelineSteps do
   @doc """
   Generates an embedding vector for the query using the Router.
 
-  This uses the Gemini text-embedding-004 model to create a 768-dimensional
-  embedding that can be used for semantic search.
+  This uses Gemini's auth-aware default embedding model via
+  `Gemini.Config.default_embedding_model/0` with its default dimensionality.
   """
   def generate_embedding(query, context, opts) when is_binary(query) do
     IO.puts("  📊 Generating embedding for query...")

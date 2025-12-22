@@ -37,12 +37,15 @@ A library to build RAG (Retrieval Augmented Generation) systems in Elixir with m
 - **Community Detection**: Label propagation algorithm for entity clustering
 - **Graph Retrieval**: Local, global, and hybrid graph search modes
 
-### Advanced Chunking (v0.3.0)
+### Advanced Chunking (v0.3.4)
+- **Behavior-based chunking**: Pluggable `Rag.Chunker` strategies
+- **Byte positions**: `start_byte`/`end_byte` on every chunk
 - **Character-based**: Fixed-size chunks with smart boundaries
 - **Sentence-based**: NLP-aware sentence splitting
 - **Paragraph-based**: Preserve document structure
 - **Recursive**: Hierarchical splitting for complex documents
 - **Semantic**: Embedding-based similarity chunking
+- **Format-aware**: TextChunker adapter for code and markup formats
 
 ### Agent Framework
 - **Tool-using Agents**: Session memory and tool registration
@@ -66,7 +69,7 @@ Add `rag_ex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:rag_ex, "~> 0.3.3"}
+    {:rag_ex, "~> 0.3.4"}
   ]
 end
 ```
@@ -83,10 +86,13 @@ config :rag, :providers, %{
   gemini: %{
     module: Rag.Ai.Gemini,
     api_key: System.get_env("GEMINI_API_KEY"),
-    model: "gemini-2.0-flash"
+    model: :flash_lite_latest
   }
 }
 ```
+
+Model keys are resolved via `Gemini.Config`, so you can omit `:model` to use the
+auth-aware default or pass other alias keys (e.g., `:flash_2_5`).
 
 ### 2. Use the Router for LLM Calls
 
@@ -127,7 +133,7 @@ config :rag, :providers, %{
   gemini: %{
     module: Rag.Ai.Gemini,
     api_key: System.get_env("GEMINI_API_KEY"),
-    model: "gemini-2.0-flash"
+    model: :flash_lite_latest
   },
   claude: %{
     module: Rag.Ai.Claude,
@@ -203,41 +209,50 @@ ranked = VectorStore.calculate_rrf_score(semantic_results, fulltext_results)
 ### Text Chunking
 
 ```elixir
-# Chunk text with overlap for context preservation
+alias Rag.Chunker
+alias Rag.Chunker.Character
+
+# Chunk text with overlap and byte positions
 long_text = File.read!("large_document.md")
-chunks = VectorStore.chunk_text(long_text, max_chars: 500, overlap: 50)
+chunker = %Character{max_chars: 500, overlap: 50}
+chunks = Chunker.chunk(chunker, long_text)
+
+# Convert to VectorStore chunks with byte metadata
+vector_chunks = VectorStore.from_chunker_chunks(chunks, "large_document.md")
 ```
 
 ## Advanced Chunking Strategies
 
-Use the `Rag.Chunking` module for flexible text splitting:
+Use the `Rag.Chunker` behavior for flexible text splitting:
 
 ```elixir
-alias Rag.Chunking
+alias Rag.Chunker
+alias Rag.Chunker.{Character, Sentence, Paragraph, Recursive, Semantic, FormatAware}
 
 text = File.read!("document.md")
 
 # Character-based chunking with smart boundaries
-chunks = Chunking.chunk_by_characters(text, chunk_size: 500, overlap: 50)
+chunks = Chunker.chunk(%Character{max_chars: 500, overlap: 50}, text)
 
 # Sentence-based chunking
-chunks = Chunking.chunk_by_sentences(text, sentences_per_chunk: 5)
+chunks = Chunker.chunk(%Sentence{max_chars: 500, min_chars: 100}, text)
 
 # Paragraph-based chunking
-chunks = Chunking.chunk_by_paragraphs(text, max_paragraphs: 3)
+chunks = Chunker.chunk(%Paragraph{max_chars: 800}, text)
 
-# Recursive chunking (hierarchical)
-chunks = Chunking.chunk_recursive(text,
-  chunk_size: 1000,
-  separators: ["\n\n", "\n", ". ", " "]
-)
+# Recursive chunking (paragraph -> sentence -> character)
+chunks = Chunker.chunk(%Recursive{max_chars: 500, min_chars: 100}, text)
 
 # Semantic chunking (requires embeddings)
-embed_fn = fn texts ->
-  {:ok, embeddings, _} = Router.execute(router, :embeddings, texts, [])
-  embeddings
+embedding_fn = fn text ->
+  {:ok, [embedding], _} = Router.execute(router, :embeddings, [text], [])
+  embedding
 end
-chunks = Chunking.chunk_semantic(text, embed_fn, similarity_threshold: 0.8)
+chunks = Chunker.chunk(%Semantic{embedding_fn: embedding_fn, threshold: 0.8}, text)
+
+# Format-aware chunking (TextChunker)
+# Requires {:text_chunker, "~> 0.5.2"}
+chunks = Chunker.chunk(%FormatAware{format: :markdown, chunk_size: 1000}, text)
 ```
 
 ## Retriever Behaviours
@@ -296,6 +311,8 @@ Build composable RAG pipelines with the `Rag.Pipeline` module:
 ```elixir
 alias Rag.Pipeline
 alias Rag.Pipeline.{Context, Executor}
+alias Rag.Chunker
+alias Rag.Chunker.Sentence
 
 # Define pipeline steps
 pipeline = %Pipeline{
@@ -304,7 +321,7 @@ pipeline = %Pipeline{
     %Pipeline.Step{
       name: :chunk,
       function: fn ctx ->
-        chunks = Chunking.chunk_by_sentences(ctx.input, sentences_per_chunk: 5)
+        chunks = Chunker.chunk(%Sentence{max_chars: 500, min_chars: 100}, ctx.input)
         {:ok, Context.put(ctx, :chunks, chunks)}
       end
     },
@@ -312,7 +329,8 @@ pipeline = %Pipeline{
       name: :embed,
       function: fn ctx ->
         chunks = Context.get(ctx, :chunks)
-        {:ok, embeddings, _} = Router.execute(router, :embeddings, chunks, [])
+        texts = Enum.map(chunks, & &1.content)
+        {:ok, embeddings, _} = Router.execute(router, :embeddings, texts, [])
         {:ok, Context.put(ctx, :embeddings, embeddings)}
       end,
       depends_on: [:chunk]
@@ -678,7 +696,7 @@ Build custom RAG pipelines:
 import Rag
 
 text
-|> Rag.build_generation(model: "gemini-2.0-flash")
+|> Rag.build_generation(model: Gemini.Config.default_model())
 |> Rag.build_context(context_documents)
 |> Rag.generate(&Gemini.generate/1)
 ```
@@ -705,7 +723,7 @@ The `examples/` directory contains runnable examples for all major features:
 | `routing_strategies.exs` | Multi-provider routing strategies |
 | `multi_llm_router.exs` | Comprehensive Router demonstration |
 | `agent.exs` | Agent framework with tool usage |
-| `chunking_strategies.exs` | All 5 chunking strategies |
+| `chunking_strategies.exs` | All chunking strategies |
 | `vector_store.exs` | In-memory vector store |
 | `basic_rag.exs` | Complete RAG workflow with DB |
 | `hybrid_search.exs` | Semantic + full-text + RRF fusion |
@@ -748,4 +766,3 @@ Comprehensive guides are available for all major features:
 - [HexDocs](https://hexdocs.pm/rag_ex)
 - [Getting Started Notebook](/notebooks/getting_started.livemd)
 - [Guides](/guides/getting_started.md)
-

@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## v0.3.4 (2025-12-21)
+
+### Breaking Changes
+* **Chunking API redesigned**: Replaced `Rag.Chunking` module with behavior-based `Rag.Chunker` system
+  * Old: `Rag.Chunking.chunk(text, strategy: :character, max_chars: 500)`
+  * New: `Rag.Chunker.chunk(%Rag.Chunker.Character{max_chars: 500}, text)`
+
+### Added
+* `Rag.Chunker` behaviour for extensible chunking strategies
+* `Rag.Chunker.Chunk` struct with byte position tracking (`start_byte`, `end_byte`)
+* Built-in chunkers:
+  * `Rag.Chunker.Character` - Fixed-size with smart boundaries
+  * `Rag.Chunker.Sentence` - Sentence-boundary splitting
+  * `Rag.Chunker.Paragraph` - Paragraph-boundary splitting
+  * `Rag.Chunker.Recursive` - Hierarchical (paragraph -> sentence -> character)
+  * `Rag.Chunker.Semantic` - Embedding-based similarity grouping
+  * `Rag.Chunker.FormatAware` - Format-aware splitting via TextChunker
+* `Rag.Chunker.chunk_ingestion/3` for pipeline integration
+* `Rag.VectorStore.from_chunker_chunks/2` for VectorStore integration
+* Byte-accurate position tracking enables source highlighting
+
+### Removed
+* `Rag.Chunking` module (replaced by `Rag.Chunker` behavior)
+
+### Migration Guide
+See `docs/20251221/chunker-redesign/implementation.md` for detailed migration instructions.
+
 ## v0.3.3 (2025-12-21)
 
 ### Fixes

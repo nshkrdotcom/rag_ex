@@ -295,11 +295,7 @@ defmodule Rag.Chunker.FormatAware do
       FormatAware chunker requires TextChunker.
       Add to your mix.exs deps:
 
-          {:text_chunker, path: "text_chunker_ex"}
-
-      Or if published:
-
-          {:text_chunker, "~> 0.5"}
+          {:text_chunker, "~> 0.5.2"}
       """
     end
 
@@ -570,7 +566,7 @@ Generate and review. All public modules and functions need `@moduledoc` and `@do
 
 ## Notes
 
-- TextChunker is at `./text_chunker_ex/` - it's a local path dependency, not published
+- TextChunker is published on Hex (current: `~> 0.5.2`)
 - The `FormatAware` chunker wraps TextChunker - make it optional (check `Code.ensure_loaded?`)
 - Preserve all existing test coverage - the old tests validate correct behavior, port them
 - Byte positions are CRITICAL - every chunk must have accurate `start_byte`/`end_byte`

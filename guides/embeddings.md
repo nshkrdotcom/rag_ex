@@ -40,7 +40,7 @@ alias Rag.Embedding.Service
 
 ```elixir
 {:ok, embedding} = Service.embed_text(pid, "Hello world")
-# embedding: [0.1, 0.2, ..., 0.768]  # 768 dimensions for Gemini
+# embedding: [0.1, 0.2, ...]  # Dimensions follow the configured Gemini embedding model
 ```
 
 ### Multiple Texts
@@ -166,7 +166,7 @@ IO.puts("Embedded #{stats.texts_embedded} texts in #{stats.batches_processed} ba
 
 | Provider | Model | Dimensions |
 |----------|-------|------------|
-| Gemini | text-embedding-004 | 768 |
+| Gemini | `Gemini.Config.default_embedding_model()` | `Gemini.Config.default_embedding_dimensions(Gemini.Config.default_embedding_model())` |
 | OpenAI | text-embedding-3-small | 1536 |
 | OpenAI | text-embedding-3-large | 3072 |
 | Cohere | embed-english-v3.0 | 1024 |

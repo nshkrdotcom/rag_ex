@@ -16,7 +16,7 @@ config :rag, :providers, %{
   gemini: %{
     module: Rag.Ai.Gemini,
     api_key: System.get_env("GEMINI_API_KEY"),
-    model: "gemini-2.0-flash"
+    model: :flash_lite_latest
   }
 }
 

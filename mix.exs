@@ -2,7 +2,7 @@ defmodule Rag.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/nshkrdotcom/rag_ex"
-  @version "0.3.3"
+  @version "0.3.4"
 
   def project do
     [
@@ -37,6 +37,7 @@ defmodule Rag.MixProject do
       {:req, "~> 0.5.10"},
       {:nx, "~> 0.9.0"},
       {:telemetry, "~> 1.0"},
+      {:text_chunker, "~> 0.5.2", optional: true},
 
       # LLM providers - all optional
       {:gemini_ex, "~> 0.8.6"},
@@ -104,10 +105,19 @@ defmodule Rag.MixProject do
           Rag,
           Rag.Router,
           Rag.VectorStore,
-          Rag.Chunking,
+          Rag.Chunker,
           Rag.Pipeline,
           Rag.Retriever,
           Rag.Reranker
+        ],
+        Chunkers: [
+          Rag.Chunker.Chunk,
+          Rag.Chunker.Character,
+          Rag.Chunker.Sentence,
+          Rag.Chunker.Paragraph,
+          Rag.Chunker.Recursive,
+          Rag.Chunker.Semantic,
+          Rag.Chunker.FormatAware
         ],
         "LLM Providers": [
           Rag.Ai.Provider,

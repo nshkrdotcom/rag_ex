@@ -1,36 +1,38 @@
 # Chunking Strategies
 
-The Chunking module provides five strategies for splitting text into chunks optimized for different use cases.
+The `Rag.Chunker` behavior provides pluggable strategies for splitting text into chunks optimized for different use cases.
 
 ## Overview
 
 ```elixir
-alias Rag.Chunking
+alias Rag.Chunker
+alias Rag.Chunker.{Character, Sentence, Paragraph, Recursive}
 
-chunks = Chunking.chunk(text, strategy: :recursive, max_chars: 500)
+chunker = %Recursive{max_chars: 500}
+chunks = Chunker.chunk(chunker, text)
 ```
 
-Each chunk returns:
+Each chunk is a `%Rag.Chunker.Chunk{}` struct:
+
 ```elixir
-%{
+%Rag.Chunker.Chunk{
   content: String.t(),      # The chunk text
-  index: non_neg_integer(), # Position in sequence
-  metadata: map()           # Strategy-specific metadata
+  start_byte: non_neg_integer(),
+  end_byte: non_neg_integer(),
+  index: non_neg_integer(),
+  metadata: map()           # Chunker-specific metadata
 }
 ```
 
-## Chunking Strategies
+## Chunkers
 
-### 1. Character-Based (`:character`)
+### 1. Character (`Rag.Chunker.Character`)
 
 Fixed-size chunks with smart boundary detection.
 
 ```elixir
-Chunking.chunk(text,
-  strategy: :character,
-  max_chars: 500,
-  overlap: 50
-)
+chunker = %Character{max_chars: 500, overlap: 50}
+Chunker.chunk(chunker, text)
 ```
 
 **Options:**
@@ -48,16 +50,13 @@ Chunking.chunk(text,
 - Unstructured text
 - Predictable chunk sizes
 
-### 2. Sentence-Based (`:sentence`)
+### 2. Sentence (`Rag.Chunker.Sentence`)
 
 Preserves complete sentences within chunks.
 
 ```elixir
-Chunking.chunk(text,
-  strategy: :sentence,
-  max_chars: 500,
-  min_chars: 100
-)
+chunker = %Sentence{max_chars: 500, min_chars: 100}
+Chunker.chunk(chunker, text)
 ```
 
 **Options:**
@@ -65,26 +64,23 @@ Chunking.chunk(text,
 - `min_chars` - Minimum characters before starting new chunk (optional)
 
 **Behavior:**
-1. Splits on sentence boundaries using regex `(?<=[.!?])\s+`
+1. Splits on sentence boundaries
 2. Combines sentences up to max_chars
 3. If min_chars specified, continues until reaching minimum
-4. Falls back to character-based if sentence exceeds max_chars
+4. Falls back to character-based if a sentence exceeds max_chars
 
 **Best for:**
 - Q&A systems
 - Well-structured prose
 - Semantic coherence
 
-### 3. Paragraph-Based (`:paragraph`)
+### 3. Paragraph (`Rag.Chunker.Paragraph`)
 
 Preserves paragraph structure and topic boundaries.
 
 ```elixir
-Chunking.chunk(text,
-  strategy: :paragraph,
-  max_chars: 500,
-  min_chars: 100
-)
+chunker = %Paragraph{max_chars: 500, min_chars: 100}
+Chunker.chunk(chunker, text)
 ```
 
 **Options:**
@@ -95,39 +91,28 @@ Chunking.chunk(text,
 1. Splits on paragraph boundaries (double newlines)
 2. Combines short paragraphs if under min_chars
 3. Falls back to sentence-based if paragraph exceeds max_chars
-4. Joins combined paragraphs with `\n\n`
 
 **Best for:**
 - Articles and blog posts
 - Documentation
 - Topic-organized content
 
-### 4. Recursive (`:recursive`)
+### 4. Recursive (`Rag.Chunker.Recursive`)
 
 Hierarchical splitting from paragraph to sentence to character.
 
 ```elixir
-Chunking.chunk(text,
-  strategy: :recursive,
-  max_chars: 500,
-  min_chars: 100
-)
+chunker = %Recursive{max_chars: 500, min_chars: 100}
+Chunker.chunk(chunker, text)
 ```
 
 **Options:**
 - `max_chars` - Maximum characters per chunk (default: 500)
 - `min_chars` - Minimum characters per chunk (optional)
 
-**Behavior:**
-1. First tries paragraph-based splitting
-2. If single paragraph, applies recursive logic within
-3. For each unit, checks if it fits
-4. Falls back to sentence splitting, then character splitting
-5. Tracks hierarchy level in metadata
-
 **Metadata:**
 ```elixir
-%{strategy: :recursive, hierarchy: :paragraph | :sentence | :character}
+%{chunker: :recursive, hierarchy: :paragraph | :sentence | :character}
 ```
 
 **Best for:**
@@ -135,40 +120,63 @@ Chunking.chunk(text,
 - Varying document formats
 - Smart hierarchy preservation
 
-### 5. Semantic (`:semantic`)
+### 5. Semantic (`Rag.Chunker.Semantic`)
 
 Groups sentences by semantic similarity using embeddings.
 
 ```elixir
+alias Rag.Router
+alias Rag.Chunker.Semantic
+
+{:ok, router} = Router.new(providers: [:gemini])
+
 embedding_fn = fn text ->
   {:ok, [embedding], _} = Router.execute(router, :embeddings, [text], [])
   embedding
 end
 
-Chunking.chunk(text,
-  strategy: :semantic,
-  max_chars: 500,
-  embedding_fn: embedding_fn,
-  threshold: 0.8
-)
+chunker = %Semantic{embedding_fn: embedding_fn, threshold: 0.8, max_chars: 500}
+Chunker.chunk(chunker, text)
 ```
 
 **Options:**
-- `max_chars` - Maximum characters per chunk (default: 500)
 - `embedding_fn` - **Required** function to generate embeddings
 - `threshold` - Similarity threshold for grouping (default: 0.8)
+- `max_chars` - Maximum characters per chunk (default: 500)
 
 **Behavior:**
 1. Splits text into sentences
 2. Generates embedding for each sentence
 3. Groups sentences by cosine similarity
 4. Continues adding while similarity >= threshold and under max_chars
-5. Updates group embedding as average of sentence embeddings
 
 **Best for:**
 - Topic-focused chunks
 - High-quality RAG systems
 - When API cost is acceptable
+
+### 6. Format-Aware (`Rag.Chunker.FormatAware`)
+
+Format-aware chunking using TextChunker for code and markup formats.
+
+```elixir
+alias Rag.Chunker.FormatAware
+
+chunker = %FormatAware{format: :markdown, chunk_size: 500}
+Chunker.chunk(chunker, markdown_text)
+```
+
+**Options:**
+- `format` - Document format (default: :plaintext)
+- `chunk_size` - Maximum size in code points (default: 2000)
+- `chunk_overlap` - Overlap between chunks (default: 200)
+- `size_fn` - Custom size function `(String.t() -> integer())` (optional)
+
+**Note:** This chunker requires TextChunker:
+
+```elixir
+{:text_chunker, "~> 0.5.2"}
+```
 
 ## Strategy Comparison
 
@@ -179,6 +187,7 @@ Chunking.chunk(text,
 | Paragraph | Variable | Topic boundaries | None | Structured docs |
 | Recursive | Variable | Smart hierarchy | None | Mixed content |
 | Semantic | Variable | Semantic groups | Yes | Topic coherence |
+| FormatAware | Variable | Format-aware | None | Code and markup |
 
 ## Overlap Demonstration
 
@@ -186,12 +195,10 @@ Chunking.chunk(text,
 text = "First sentence. Second sentence. Third sentence. Fourth sentence."
 
 # No overlap
-Chunking.chunk(text, strategy: :character, max_chars: 40, overlap: 0)
-# ["First sentence. Second", "sentence. Third sent", "ence. Fourth sentence."]
+Chunker.chunk(%Character{max_chars: 40, overlap: 0}, text)
 
 # With overlap
-Chunking.chunk(text, strategy: :character, max_chars: 40, overlap: 20)
-# ["First sentence. Second", "Second sentence. Third", "Third sentence. Fourth"]
+Chunker.chunk(%Character{max_chars: 40, overlap: 20}, text)
 ```
 
 Overlap helps:
@@ -199,45 +206,41 @@ Overlap helps:
 - Improve retrieval for information at chunk boundaries
 - Reduce information loss during splitting
 
-## Configuration Defaults
+## Position Validation
 
 ```elixir
-@default_max_chars 500
-@default_overlap 50
-@default_semantic_threshold 0.8
+alias Rag.Chunker.Chunk
+
+chunker = %Character{max_chars: 100}
+chunks = Chunker.chunk(chunker, text)
+
+Enum.all?(chunks, fn chunk ->
+  Chunk.valid?(chunk, text)
+end)
 ```
 
 ## Complete Example
 
 ```elixir
-alias Rag.Chunking
-alias Rag.Router
+alias Rag.Chunker
+alias Rag.Chunker.{Character, Sentence, Paragraph, Recursive, Semantic}
 
 # Load document
 text = File.read!("document.md")
 
 # Try different strategies
-char_chunks = Chunking.chunk(text, strategy: :character, max_chars: 500, overlap: 50)
-sent_chunks = Chunking.chunk(text, strategy: :sentence, max_chars: 500)
-para_chunks = Chunking.chunk(text, strategy: :paragraph, max_chars: 500)
-rec_chunks = Chunking.chunk(text, strategy: :recursive, max_chars: 500)
+char_chunks = Chunker.chunk(%Character{max_chars: 500, overlap: 50}, text)
+sent_chunks = Chunker.chunk(%Sentence{max_chars: 500}, text)
+para_chunks = Chunker.chunk(%Paragraph{max_chars: 500}, text)
+rec_chunks = Chunker.chunk(%Recursive{max_chars: 500}, text)
 
 # Semantic chunking (requires embedding function)
-{:ok, router} = Router.new(providers: [:gemini])
-
 embedding_fn = fn text ->
-  case Router.execute(router, :embeddings, [text], []) do
-    {:ok, [embedding], _} -> embedding
-    {:error, _} -> List.duplicate(0.0, 768)  # Fallback
-  end
+  {:ok, [embedding], _} = Rag.Router.execute(router, :embeddings, [text], [])
+  embedding
 end
 
-sem_chunks = Chunking.chunk(text,
-  strategy: :semantic,
-  max_chars: 500,
-  embedding_fn: embedding_fn,
-  threshold: 0.75
-)
+sem_chunks = Chunker.chunk(%Semantic{embedding_fn: embedding_fn, threshold: 0.75}, text)
 
 # Compare results
 for {name, chunks} <- [
@@ -256,36 +259,3 @@ for {name, chunks} <- [
   IO.puts("#{name}: #{length(chunks)} chunks, avg #{avg_size} chars")
 end
 ```
-
-## Choosing a Strategy
-
-**Use Character when:**
-- You need consistent chunk sizes
-- Working with unstructured text
-- Embedding model has strict size limits
-
-**Use Sentence when:**
-- Building Q&A systems
-- Working with well-structured prose
-- Semantic coherence matters
-
-**Use Paragraph when:**
-- Documents have clear topic boundaries
-- Working with articles/papers
-- Want to preserve document structure
-
-**Use Recursive when:**
-- Documents have varying structures
-- Don't know structure in advance
-- Want smart fallback behavior
-
-**Use Semantic when:**
-- Topic coherence is critical
-- API cost is acceptable
-- Building high-quality RAG systems
-
-## Next Steps
-
-- [Vector Store](vector_store.md) - Store chunked documents
-- [Embeddings](embeddings.md) - Generate embeddings for chunks
-- [Retrievers](retrievers.md) - Search chunked documents

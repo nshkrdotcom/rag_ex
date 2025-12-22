@@ -1,7 +1,7 @@
 # Basic RAG Example
 #
 # This example demonstrates a complete RAG (Retrieval Augmented Generation) workflow:
-# 1. Text chunking with Rag.Chunking
+# 1. Text chunking with Rag.Chunker
 # 2. Embedding generation using Router with Gemini or OpenAI
 # 3. Storing chunks in PostgreSQL with pgvector using Rag.VectorStore.Pgvector
 # 4. Semantic search/retrieval with Rag.Retriever.Semantic
@@ -248,7 +248,8 @@ end
 # ============================================================================
 
 alias Rag.Router
-alias Rag.Chunking
+alias Rag.Chunker
+alias Rag.Chunker.{Character, Paragraph, Recursive, Sentence}
 alias Rag.VectorStore
 alias Rag.VectorStore.Pgvector
 alias Rag.VectorStore.Chunk
@@ -363,24 +364,15 @@ docs_with_metadata =
   end)
 
 # Chunk each document using character-based strategy
+chunker = %Character{max_chars: 200, overlap: 30}
+
 all_chunks =
   Enum.flat_map(docs_with_metadata, fn doc ->
-    # Use Rag.Chunking for more sophisticated chunking
-    chunks =
-      Chunking.chunk(doc.text,
-        strategy: :character,
-        max_chars: 200,
-        overlap: 30
-      )
-
-    # Add source and category metadata to each chunk
-    Enum.map(chunks, fn chunk ->
-      %{
-        content: chunk.content,
-        source: doc.source,
-        metadata: Map.merge(chunk.metadata, %{category: doc.category})
-      }
+    Chunker.chunk(chunker, doc.text)
+    |> Enum.map(fn chunk ->
+      %{chunk | metadata: Map.put(chunk.metadata, :category, doc.category)}
     end)
+    |> then(&VectorStore.from_chunker_chunks(&1, doc.source))
   end)
 
 IO.puts("Created #{length(all_chunks)} chunks using character-based chunking")
@@ -403,7 +395,7 @@ IO.puts("Step 4: Generating embeddings")
 IO.puts(String.duplicate("-", 60))
 
 # Build chunk structs
-chunk_structs = VectorStore.build_chunks(all_chunks)
+chunk_structs = all_chunks
 
 # Extract content for embedding
 contents = Enum.map(chunk_structs, & &1.content)
@@ -618,11 +610,7 @@ IO.puts("")
 # Sentence-based chunking
 IO.puts("1. Sentence-based chunking:")
 
-sentence_chunks =
-  Chunking.chunk(sample_text,
-    strategy: :sentence,
-    max_chars: 150
-  )
+sentence_chunks = Chunker.chunk(%Sentence{max_chars: 150}, sample_text)
 
 Enum.each(Enum.with_index(sentence_chunks, 1), fn {chunk, idx} ->
   IO.puts("  #{idx}. #{chunk.content}")
@@ -633,11 +621,7 @@ IO.puts("")
 # Paragraph-based chunking
 IO.puts("2. Paragraph-based chunking:")
 
-para_chunks =
-  Chunking.chunk(sample_text,
-    strategy: :paragraph,
-    max_chars: 300
-  )
+para_chunks = Chunker.chunk(%Paragraph{max_chars: 300}, sample_text)
 
 Enum.each(Enum.with_index(para_chunks, 1), fn {chunk, idx} ->
   IO.puts(
@@ -650,11 +634,7 @@ IO.puts("")
 # Recursive chunking (hierarchical)
 IO.puts("3. Recursive chunking (tries paragraph -> sentence -> character):")
 
-recursive_chunks =
-  Chunking.chunk(sample_text,
-    strategy: :recursive,
-    max_chars: 100
-  )
+recursive_chunks = Chunker.chunk(%Recursive{max_chars: 100}, sample_text)
 
 Enum.each(Enum.with_index(recursive_chunks, 1), fn {chunk, idx} ->
   IO.puts("  #{idx}. [#{chunk.metadata.hierarchy}] #{String.slice(chunk.content, 0, 60)}...")

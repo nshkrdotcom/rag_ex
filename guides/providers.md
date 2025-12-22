@@ -45,13 +45,25 @@ export CODEX_API_KEY="your-api-key"
 
 The default provider with full embedding support.
 
+Models are resolved through `Gemini.Config`, so you can pass alias keys
+(e.g., `:flash_lite_latest`) or omit `:model` to use auth-aware defaults.
+
+Optional app-wide defaults:
+
+```elixir
+config :rag, Rag.Ai.Gemini,
+  model: Gemini.Config.default_model(),
+  embedding_model: Gemini.Config.default_embedding_model()
+```
+
 ### Usage
 
 ```elixir
 alias Rag.Ai.Gemini
+alias Gemini.Config, as: GeminiConfig
 
 # Create provider instance
-provider = Gemini.new(%{model: "gemini-2.0-flash-exp"})
+provider = Gemini.new(%{model: :flash_lite_latest})
 
 # Text generation
 {:ok, response} = Gemini.generate_text(provider, "Hello!", [])
@@ -79,7 +91,7 @@ Enum.each(stream, &IO.write/1)
 # Embedding options
 [
   task_type: :retrieval_document,  # or :retrieval_query
-  model: "text-embedding-004"      # Embedding model (768 dimensions)
+  model: GeminiConfig.default_embedding_model() # Auth-aware default
 ]
 ```
 

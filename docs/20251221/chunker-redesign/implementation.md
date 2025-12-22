@@ -54,7 +54,7 @@
 - [ ] Add `text_chunker` to deps if making FormatAware a first-class feature
 
 ```elixir
-{:text_chunker, "~> 0.5", optional: true}
+{:text_chunker, "~> 0.5.2", optional: true}
 ```
 
 ---
@@ -219,7 +219,7 @@ defmodule Rag.Chunker.FormatAware do
   def chunk(%__MODULE__{} = chunker, text, opts) do
     # Check TextChunker is available
     unless Code.ensure_loaded?(TextChunker) do
-      raise "TextChunker is required for FormatAware chunker. Add {:text_chunker, \"~> 0.5\"} to deps."
+      raise "TextChunker is required for FormatAware chunker. Add {:text_chunker, \"~> 0.5.2\"} to deps."
     end
 
     tc_opts = [
@@ -362,7 +362,7 @@ end
 # mix.exs
 defp deps do
   [
-    {:text_chunker, "~> 0.5", optional: true}
+    {:text_chunker, "~> 0.5.2", optional: true}
   ]
 end
 ```
@@ -373,7 +373,7 @@ def chunk(%__MODULE__{} = chunker, text, opts) do
   unless Code.ensure_loaded?(TextChunker) do
     raise """
     FormatAware chunker requires TextChunker.
-    Add to your deps: {:text_chunker, "~> 0.5"}
+    Add to your deps: {:text_chunker, "~> 0.5.2"}
     """
   end
   # ...

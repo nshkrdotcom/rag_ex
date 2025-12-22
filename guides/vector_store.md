@@ -183,23 +183,26 @@ Documents appearing in both result sets get combined scores.
 
 ## Text Chunking
 
-Split large documents into smaller chunks:
+Split large documents into smaller chunks with byte positions:
 
 ```elixir
-# Basic chunking
+alias Rag.Chunker
+alias Rag.Chunker.Character
+
 long_text = File.read!("large_document.md")
-chunks = VectorStore.chunk_text(long_text, max_chars: 500, overlap: 50)
+chunker = %Character{max_chars: 500, overlap: 50}
+chunks = Chunker.chunk(chunker, long_text)
+
+vector_chunks = VectorStore.from_chunker_chunks(chunks, "large_document.md")
 ```
 
-**Options:**
-- `max_chars` - Maximum chunk size (default: 500)
-- `overlap` - Character overlap between chunks (default: 50)
+This preserves `start_byte` and `end_byte` in metadata for source highlighting.
 
-**How it works:**
-1. Tries to split at sentence boundaries (`.!?`)
-2. Falls back to word boundaries
-3. Falls back to hard split at max_chars
-4. Creates overlap for context preservation
+If you only need raw strings, `VectorStore.chunk_text/2` remains available:
+
+```elixir
+VectorStore.chunk_text(long_text, max_chars: 500, overlap: 50)
+```
 
 For more advanced chunking strategies, see the [Chunking Guide](chunking.md).
 

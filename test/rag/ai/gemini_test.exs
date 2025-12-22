@@ -2,6 +2,7 @@ defmodule Rag.Ai.GeminiTest do
   use ExUnit.Case, async: true
 
   alias Rag.Ai.Gemini
+  alias Elixir.Gemini.Config, as: GeminiConfig
 
   @moduletag :skip_without_gemini_api_key
 
@@ -18,13 +19,13 @@ defmodule Rag.Ai.GeminiTest do
       provider = Gemini.new(%{})
 
       assert %Gemini{} = provider
-      assert provider.model == "gemini-2.0-flash-exp"
+      assert provider.model == GeminiConfig.default_model()
     end
 
     test "creates a provider with custom model" do
-      provider = Gemini.new(%{model: "gemini-1.5-pro"})
+      provider = Gemini.new(%{model: :flash_2_5})
 
-      assert provider.model == "gemini-1.5-pro"
+      assert provider.model == GeminiConfig.get_model(:flash_2_5)
     end
 
     test "accepts configuration options" do
@@ -89,8 +90,9 @@ defmodule Rag.Ai.GeminiTest do
       {:ok, [embedding]} = Gemini.generate_embeddings(provider, ["hello world"], [])
 
       assert is_list(embedding)
-      # Default dimension
-      assert length(embedding) == 768
+      default_model = GeminiConfig.default_embedding_model()
+      default_dims = GeminiConfig.default_embedding_dimensions(default_model)
+      assert length(embedding) == default_dims
       assert Enum.all?(embedding, &is_float/1)
     end
 
@@ -100,10 +102,13 @@ defmodule Rag.Ai.GeminiTest do
 
       {:ok, embeddings} = Gemini.generate_embeddings(provider, ["hello", "world", "test"], [])
 
+      default_model = GeminiConfig.default_embedding_model()
+      default_dims = GeminiConfig.default_embedding_dimensions(default_model)
+
       assert length(embeddings) == 3
 
       assert Enum.all?(embeddings, fn emb ->
-               is_list(emb) and length(emb) == 768
+               is_list(emb) and length(emb) == default_dims
              end)
     end
 
@@ -119,7 +124,9 @@ defmodule Rag.Ai.GeminiTest do
         )
 
       assert is_list(embedding)
-      assert length(embedding) == 768
+      default_model = GeminiConfig.default_embedding_model()
+      default_dims = GeminiConfig.default_embedding_dimensions(default_model)
+      assert length(embedding) == default_dims
     end
   end
 

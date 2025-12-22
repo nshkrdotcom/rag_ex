@@ -1,6 +1,6 @@
 # Chunking Strategies Example
 #
-# This example demonstrates all chunking strategies available in Rag.Chunking.
+# This example demonstrates all chunking strategies available in Rag.Chunker.
 # Each strategy has different use cases and trade-offs for document processing.
 #
 # Run from project root:
@@ -9,7 +9,8 @@
 # Prerequisites:
 #   - Set GEMINI_API_KEY environment variable (for semantic chunking demo)
 
-alias Rag.Chunking
+alias Rag.Chunker
+alias Rag.Chunker.{Character, FormatAware, Paragraph, Recursive, Semantic, Sentence}
 alias Rag.Router
 
 IO.puts("=== Chunking Strategies Demo ===\n")
@@ -97,7 +98,7 @@ IO.puts("   Best for: Consistent embedding sizes, any text structure")
 IO.puts("")
 
 char_chunks =
-  Chunking.chunk(sample_document, strategy: :character, max_chars: max_chars, overlap: overlap)
+  Chunker.chunk(%Character{max_chars: max_chars, overlap: overlap}, sample_document)
 
 ChunkHelper.display_chunks(
   char_chunks,
@@ -117,11 +118,7 @@ IO.puts("   Best for: Q&A systems, semantic coherence")
 IO.puts("")
 
 sentence_chunks =
-  Chunking.chunk(sample_document,
-    strategy: :sentence,
-    max_chars: max_chars,
-    min_chars: min_chars
-  )
+  Chunker.chunk(%Sentence{max_chars: max_chars, min_chars: min_chars}, sample_document)
 
 ChunkHelper.display_chunks(
   sentence_chunks,
@@ -141,11 +138,7 @@ IO.puts("   Best for: Documents with clear paragraph organization")
 IO.puts("")
 
 paragraph_chunks =
-  Chunking.chunk(sample_document,
-    strategy: :paragraph,
-    max_chars: max_chars,
-    min_chars: min_chars
-  )
+  Chunker.chunk(%Paragraph{max_chars: max_chars, min_chars: min_chars}, sample_document)
 
 ChunkHelper.display_chunks(
   paragraph_chunks,
@@ -165,11 +158,7 @@ IO.puts("   Best for: Mixed content with varying structure")
 IO.puts("")
 
 recursive_chunks =
-  Chunking.chunk(sample_document,
-    strategy: :recursive,
-    max_chars: max_chars,
-    min_chars: min_chars
-  )
+  Chunker.chunk(%Recursive{max_chars: max_chars, min_chars: min_chars}, sample_document)
 
 ChunkHelper.display_chunks(
   recursive_chunks,
@@ -208,11 +197,9 @@ results =
       end
 
       semantic_chunks =
-        Chunking.chunk(sample_document,
-          strategy: :semantic,
-          max_chars: max_chars,
-          embedding_fn: embedding_fn,
-          threshold: 0.75
+        Chunker.chunk(
+          %Semantic{embedding_fn: embedding_fn, max_chars: max_chars, threshold: 0.75},
+          sample_document
         )
 
       ChunkHelper.display_chunks(
@@ -241,11 +228,9 @@ results =
       end
 
       semantic_chunks =
-        Chunking.chunk(sample_document,
-          strategy: :semantic,
-          max_chars: max_chars,
-          embedding_fn: mock_embedding_fn,
-          threshold: 0.8
+        Chunker.chunk(
+          %Semantic{embedding_fn: mock_embedding_fn, max_chars: max_chars, threshold: 0.8},
+          sample_document
         )
 
       ChunkHelper.display_chunks(
@@ -255,6 +240,29 @@ results =
 
       [{"Semantic (mock)", semantic_chunks} | results]
   end
+
+# 6. FORMAT-AWARE CHUNKING
+# Use case: Format-aware splitting via TextChunker
+# Pros: Better boundaries for code/markup formats
+# Cons: Requires TextChunker dependency
+IO.puts(String.duplicate("=", 60))
+IO.puts("\n6. FORMAT-AWARE CHUNKING")
+IO.puts("   Use case: Format-aware splitting for code and markup")
+IO.puts("   Best for: Source code, markdown, structured formats")
+IO.puts("")
+
+format_aware_chunks =
+  Chunker.chunk(
+    %FormatAware{format: :plaintext, chunk_size: max_chars, chunk_overlap: overlap},
+    sample_document
+  )
+
+ChunkHelper.display_chunks(
+  format_aware_chunks,
+  "Format-aware chunks (size: #{max_chars}, overlap: #{overlap})"
+)
+
+results = [{"FormatAware", format_aware_chunks} | results]
 
 # Display summary comparison
 ChunkHelper.display_summary(Enum.reverse(results))
@@ -271,7 +279,7 @@ IO.puts("Sample text: #{short_text}\n")
 
 for overlap_size <- [0, 10, 20] do
   overlapping_chunks =
-    Chunking.chunk(short_text, strategy: :character, max_chars: 40, overlap: overlap_size)
+    Chunker.chunk(%Character{max_chars: 40, overlap: overlap_size}, short_text)
 
   IO.puts("With overlap: #{overlap_size} characters")
 
@@ -314,6 +322,11 @@ IO.puts("  ✓ Semantic coherence is critical")
 IO.puts("  ✓ Can afford embedding API costs")
 IO.puts("  ✓ Building high-quality RAG systems")
 IO.puts("  ✓ Processing documents where topic shifts matter")
+IO.puts("")
+IO.puts("FORMAT-AWARE:")
+IO.puts("  ✓ Splitting code or markup formats")
+IO.puts("  ✓ Want language-aware boundaries")
+IO.puts("  ✓ Working with structured text formats")
 IO.puts("")
 
 IO.puts("=== Done ===")

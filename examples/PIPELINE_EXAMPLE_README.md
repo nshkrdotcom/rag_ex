@@ -169,7 +169,7 @@ Validates and extracts the user query from input.
 **Output**: Validated query string
 
 ### 2. Generate Embedding
-Creates a 768-dimensional embedding vector using Gemini.
+Creates an embedding vector using Gemini's configured default embedding model.
 
 **Input**: Query string
 **Output**: Embedding vector `[float()]`

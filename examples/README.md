@@ -120,10 +120,11 @@ Text chunking strategies for document processing.
 - Paragraph-based chunking (preserve topic boundaries)
 - Recursive chunking (hierarchical splitting)
 - Semantic chunking (embedding-based similarity)
+- Format-aware chunking (TextChunker adapter)
 - Chunk overlap configuration
 - Strategy comparison and selection guide
 
-**Note:** Semantic chunking requires GEMINI_API_KEY. Falls back to mock embeddings if not available.
+**Note:** Format-aware chunking requires TextChunker (`{:text_chunker, "~> 0.5.2"}`). Semantic chunking requires GEMINI_API_KEY and falls back to mock embeddings if not available.
 
 ---
 

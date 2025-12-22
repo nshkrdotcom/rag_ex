@@ -74,6 +74,27 @@ if Code.ensure_loaded?(Ecto.Query) do
     end
 
     @doc """
+    Convert Chunker.Chunk structs to VectorStore format.
+
+    Preserves byte positions in metadata for source highlighting.
+    """
+    @spec from_chunker_chunks([Rag.Chunker.Chunk.t()], String.t()) :: [Chunk.t()]
+    def from_chunker_chunks(chunks, source) when is_list(chunks) do
+      Enum.map(chunks, fn %Rag.Chunker.Chunk{} = chunk ->
+        build_chunk(%{
+          content: chunk.content,
+          source: source,
+          metadata:
+            Map.merge(chunk.metadata, %{
+              start_byte: chunk.start_byte,
+              end_byte: chunk.end_byte,
+              chunk_index: chunk.index
+            })
+        })
+      end)
+    end
+
+    @doc """
     Add embeddings to a list of chunks.
 
     Raises `ArgumentError` if the number of chunks doesn't match

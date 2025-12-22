@@ -130,12 +130,13 @@ The language features include pattern matching, guards, and a macro system for m
 Elixir also provides protocols for polymorphism and structs for data structuring.
 """
 
-text_chunks = VectorStore.chunk_text(long_text, max_chars: 150, overlap: 20)
-IO.puts("Split into #{length(text_chunks)} chunks with 150 char max and 20 char overlap:")
+chunker = %Rag.Chunker.Character{max_chars: 150, overlap: 20}
+chunks = Rag.Chunker.chunk(chunker, long_text)
+IO.puts("Split into #{length(chunks)} chunks with 150 char max and 20 char overlap:")
 
-for {chunk, idx} <- Enum.with_index(text_chunks, 1) do
-  IO.puts("\n  Chunk #{idx} (#{String.length(chunk)} chars):")
-  IO.puts("  #{inspect(chunk)}")
+for {chunk, idx} <- Enum.with_index(chunks, 1) do
+  IO.puts("\n  Chunk #{idx} (#{String.length(chunk.content)} chars):")
+  IO.puts("  #{inspect(chunk.content)}")
 end
 
 IO.puts("\n=== Done ===")

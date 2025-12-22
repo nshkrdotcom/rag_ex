@@ -286,30 +286,82 @@ defmodule HybridSearchExample.Helpers do
     end
   end
 
-  def ensure_table_exists!(repo) do
+  def ensure_table_exists!(repo, embedding_dimensions) when is_integer(embedding_dimensions) do
+    current_dim = current_embedding_dimensions(repo)
+
+    if current_dim != nil and current_dim != embedding_dimensions do
+      IO.puts(
+        "! Existing rag_chunks embedding dimension #{current_dim} does not match #{embedding_dimensions}; recreating table"
+      )
+
+      Ecto.Adapters.SQL.query!(repo, "DROP TABLE IF EXISTS rag_chunks CASCADE", [])
+    end
+
     # Create the rag_chunks table if it doesn't exist
     query = """
     CREATE TABLE IF NOT EXISTS rag_chunks (
       id BIGSERIAL PRIMARY KEY,
       content TEXT NOT NULL,
       source TEXT,
-      embedding vector(768),
+      embedding vector(#{embedding_dimensions}),
       metadata JSONB DEFAULT '{}',
       inserted_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     )
     """
 
-    Ecto.Adapters.SQL.query!(repo, query)
+    Ecto.Adapters.SQL.query!(repo, query, [])
 
-    # Create index for vector similarity search
-    Ecto.Adapters.SQL.query!(
-      repo,
-      "CREATE INDEX IF NOT EXISTS rag_chunks_embedding_idx ON rag_chunks USING ivfflat (embedding vector_l2_ops) WITH (lists = 100)",
-      []
-    )
+    # Create index for vector similarity search when dimensions allow
+    if embedding_dimensions <= 2000 do
+      Ecto.Adapters.SQL.query!(
+        repo,
+        "CREATE INDEX IF NOT EXISTS rag_chunks_embedding_idx ON rag_chunks USING ivfflat (embedding vector_l2_ops) WITH (lists = 100)",
+        []
+      )
 
-    IO.puts("✓ Database table ready")
+      IO.puts(
+        "✓ Database table ready (embedding dimensions: #{embedding_dimensions}, ivfflat index)"
+      )
+    else
+      Ecto.Adapters.SQL.query!(repo, "DROP INDEX IF EXISTS rag_chunks_embedding_idx", [])
+
+      IO.puts("✓ Database table ready (embedding dimensions: #{embedding_dimensions})")
+
+      IO.puts(
+        "! Skipping ivfflat index: pgvector ivfflat supports up to 2000 dimensions. " <>
+          "Use output_dimensionality to reduce dims if you want an index."
+      )
+    end
+  end
+
+  defp current_embedding_dimensions(repo) do
+    query = """
+    SELECT format_type(a.atttypid, a.atttypmod)
+    FROM pg_attribute a
+    JOIN pg_class c ON c.oid = a.attrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relname = 'rag_chunks'
+      AND n.nspname = 'public'
+      AND a.attname = 'embedding'
+      AND a.attnum > 0
+      AND NOT a.attisdropped
+    """
+
+    case Ecto.Adapters.SQL.query(repo, query, []) do
+      {:ok, %{rows: [[type]]}} ->
+        parse_vector_dimensions(type)
+
+      _ ->
+        nil
+    end
+  end
+
+  defp parse_vector_dimensions(type) when is_binary(type) do
+    case Regex.run(~r/vector\((\d+)\)/, type) do
+      [_, dims] -> String.to_integer(dims)
+      _ -> nil
+    end
   end
 end
 
@@ -342,9 +394,6 @@ case Helpers.check_api_keys() do
 
     System.halt(1)
 end
-
-# Ensure database table exists
-Helpers.ensure_table_exists!(Repo)
 
 # Create router for embeddings and reranking
 IO.puts("Initializing router...")
@@ -453,6 +502,8 @@ case Router.execute(router, :embeddings, contents, []) do
     IO.puts("✓ Generated #{length(embeddings)} embeddings (dimension: #{embedding_dim})")
 
     chunks_with_embeddings = VectorStore.add_embeddings(chunks, embeddings)
+
+    Helpers.ensure_table_exists!(Repo, embedding_dim)
 
     IO.puts("\nStoring chunks in database...")
     # Clear existing data for this demo

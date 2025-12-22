@@ -75,6 +75,30 @@ defmodule Rag.VectorStoreTest do
     end
   end
 
+  describe "from_chunker_chunks/2" do
+    test "converts chunker chunks with byte metadata" do
+      chunks = [
+        Rag.Chunker.Chunk.new(%{
+          content: "Hello",
+          start_byte: 0,
+          end_byte: 5,
+          index: 0,
+          metadata: %{chunker: :character}
+        })
+      ]
+
+      [converted] = VectorStore.from_chunker_chunks(chunks, "doc.txt")
+
+      assert %Chunk{} = converted
+      assert converted.content == "Hello"
+      assert converted.source == "doc.txt"
+      assert converted.metadata.chunker == :character
+      assert converted.metadata.start_byte == 0
+      assert converted.metadata.end_byte == 5
+      assert converted.metadata.chunk_index == 0
+    end
+  end
+
   describe "add_embeddings/2" do
     test "adds embeddings to chunks" do
       chunks = [

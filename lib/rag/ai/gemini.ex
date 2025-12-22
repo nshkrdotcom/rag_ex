@@ -12,6 +12,9 @@ defmodule Rag.Ai.Gemini do
       provider = Gemini.new(%{})
       {:ok, response} = Gemini.generate_text(provider, "Hello!", [])
 
+      # Use a model alias from gemini_ex
+      provider = Gemini.new(%{model: :flash_lite_latest})
+
       # Generate embeddings
       {:ok, embeddings} = Gemini.generate_embeddings(provider, ["text1", "text2"], [])
 
@@ -19,27 +22,44 @@ defmodule Rag.Ai.Gemini do
 
   @behaviour Rag.Ai.Provider
 
-  defstruct [:model, :config]
+  defstruct [:model, :embedding_model, :embedding_dimensions, :config]
+
+  @type model_ref :: atom() | String.t()
 
   @type t :: %__MODULE__{
           model: String.t(),
+          embedding_model: String.t(),
+          embedding_dimensions: pos_integer() | nil,
           config: map()
         }
 
-  @default_model "gemini-2.0-flash-exp"
-  @default_embedding_model "text-embedding-004"
-  @embedding_dimensions 768
   @max_context_tokens 1_000_000
 
-  # Pricing per 1M tokens for Gemini 2.0 Flash
+  # Pricing per 1M tokens for Gemini Flash (representative; model-dependent).
   @input_cost 0.075
   @output_cost 0.30
 
   @impl true
   def new(attrs) do
+    app_model = config_value(:model)
+    app_embedding_model = config_value(:embedding_model)
+    app_embedding_dimensions = config_value(:embedding_dimensions)
+
+    model = resolve_model(Map.get(attrs, :model) || app_model)
+
+    embedding_model =
+      resolve_embedding_model(Map.get(attrs, :embedding_model) || app_embedding_model)
+
+    embedding_dimensions =
+      resolve_embedding_dimensions_override(
+        Map.get(attrs, :embedding_dimensions) || app_embedding_dimensions
+      )
+
     %__MODULE__{
-      model: attrs[:model] || @default_model,
-      config: attrs[:config] || %{}
+      model: model,
+      embedding_model: embedding_model,
+      embedding_dimensions: embedding_dimensions,
+      config: Map.get(attrs, :config, %{})
     }
   end
 
@@ -48,16 +68,23 @@ defmodule Rag.Ai.Gemini do
   # between Gemini.batch_embed_contents/2 spec (returns map()) and the actual
   # BatchEmbedContentsResponse struct returned.
   @dialyzer {:nowarn_function, generate_embeddings: 3}
-  def generate_embeddings(_provider, texts, opts) do
+  def generate_embeddings(provider, texts, opts) do
     task_type = Keyword.get(opts, :task_type, :retrieval_document)
-    model = Keyword.get(opts, :model, @default_embedding_model)
+    model = resolve_embedding_model(Keyword.get(opts, :model, provider.embedding_model))
 
-    result =
-      Gemini.batch_embed_contents(texts,
-        model: model,
-        task_type: task_type,
-        output_dimensionality: @embedding_dimensions
-      )
+    dimensions =
+      Keyword.get(opts, :output_dimensionality) ||
+        Keyword.get(opts, :dimensions) ||
+        provider.embedding_dimensions ||
+        Gemini.Config.default_embedding_dimensions(model)
+
+    embed_opts =
+      []
+      |> Keyword.put(:model, model)
+      |> Keyword.put(:task_type, task_type)
+      |> maybe_add_opt(:output_dimensionality, dimensions)
+
+    result = Gemini.batch_embed_contents(texts, embed_opts)
 
     case result do
       {:ok, response} ->
@@ -125,6 +152,27 @@ defmodule Rag.Ai.Gemini do
 
   defp maybe_add_opt(opts, _key, nil), do: opts
   defp maybe_add_opt(opts, key, value), do: Keyword.put(opts, key, value)
+
+  defp resolve_model(nil), do: Gemini.Config.default_model()
+  defp resolve_model(model) when is_atom(model), do: Gemini.Config.get_model(model)
+  defp resolve_model(model) when is_binary(model), do: model
+
+  defp resolve_embedding_model(nil), do: Gemini.Config.default_embedding_model()
+  defp resolve_embedding_model(model) when is_atom(model), do: Gemini.Config.get_model(model)
+  defp resolve_embedding_model(model) when is_binary(model), do: model
+
+  defp resolve_embedding_dimensions_override(nil), do: nil
+
+  defp resolve_embedding_dimensions_override(dimensions) when is_integer(dimensions),
+    do: dimensions
+
+  defp config_value(key) do
+    case Application.get_env(:rag, __MODULE__, []) do
+      nil -> nil
+      opts when is_list(opts) -> Keyword.get(opts, key)
+      opts when is_map(opts) -> Map.get(opts, key)
+    end
+  end
 
   defp stream_response(prompt, opts) do
     Stream.resource(
