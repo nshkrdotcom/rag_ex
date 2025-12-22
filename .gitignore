@@ -27,3 +27,4 @@ rag-*.tar
 
 # dialzyer
 /_plts/
+/text_chunker_ex/
