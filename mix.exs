@@ -2,7 +2,7 @@ defmodule Rag.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/bitcrowd/rag"
-  @version "0.3.2"
+  @version "0.3.3"
 
   def project do
     [

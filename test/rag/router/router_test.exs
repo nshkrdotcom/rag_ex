@@ -36,6 +36,7 @@ defmodule Rag.Router.RouterTest do
       {:error, :no_providers} = Router.new(providers: [])
     end
 
+    @tag :requires_llm_provider
     test "auto-detects available providers" do
       {:ok, router} = Router.new(auto_detect: true)
 

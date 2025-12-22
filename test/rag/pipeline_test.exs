@@ -380,8 +380,6 @@ defmodule Rag.PipelineTest do
 
   # Test helper module with step functions
   defmodule TestSteps do
-    alias Rag.Pipeline.Context
-
     def double(input, _context, _opts) when is_number(input) do
       {:ok, input * 2}
     end

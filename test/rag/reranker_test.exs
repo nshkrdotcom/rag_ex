@@ -71,6 +71,7 @@ defmodule Rag.RerankerTest do
   end
 
   describe "LLM reranker" do
+    @tag :requires_llm_provider
     test "creates reranker with default options" do
       reranker = LLM.new()
 
@@ -86,6 +87,7 @@ defmodule Rag.RerankerTest do
       assert reranker.router == router
     end
 
+    @tag :requires_llm_provider
     test "creates reranker with custom prompt template" do
       custom_template = "Custom template: {query} {documents}"
       reranker = LLM.new(prompt_template: custom_template)
@@ -93,6 +95,7 @@ defmodule Rag.RerankerTest do
       assert reranker.prompt_template == custom_template
     end
 
+    @tag :requires_llm_provider
     test "reranks documents using LLM scores" do
       reranker = LLM.new()
       query = "What is Elixir?"
@@ -124,6 +127,7 @@ defmodule Rag.RerankerTest do
       assert Enum.at(results, 2).score == 3.0
     end
 
+    @tag :requires_llm_provider
     test "handles LLM errors gracefully" do
       reranker = LLM.new()
       query = "What is Elixir?"
@@ -135,6 +139,7 @@ defmodule Rag.RerankerTest do
       {:error, :timeout} = LLM.rerank(reranker, query, @sample_documents, [])
     end
 
+    @tag :requires_llm_provider
     test "handles invalid JSON response" do
       reranker = LLM.new()
       query = "What is Elixir?"
@@ -146,6 +151,7 @@ defmodule Rag.RerankerTest do
       {:error, %Jason.DecodeError{}} = LLM.rerank(reranker, query, @sample_documents, [])
     end
 
+    @tag :requires_llm_provider
     test "handles empty document list" do
       reranker = LLM.new()
       query = "What is Elixir?"
@@ -155,6 +161,7 @@ defmodule Rag.RerankerTest do
       assert results == []
     end
 
+    @tag :requires_llm_provider
     test "passes top_k option to limit results" do
       reranker = LLM.new()
       query = "What is Elixir?"
@@ -179,6 +186,7 @@ defmodule Rag.RerankerTest do
       assert Enum.at(results, 1).id == 2
     end
 
+    @tag :requires_llm_provider
     test "preserves document metadata" do
       reranker = LLM.new()
       query = "test"
@@ -205,6 +213,7 @@ defmodule Rag.RerankerTest do
       assert Enum.at(results, 1).metadata == %{source: "file1.txt"}
     end
 
+    @tag :requires_llm_provider
     test "handles partial scoring (missing some doc indices)" do
       reranker = LLM.new()
       query = "test"
@@ -227,6 +236,7 @@ defmodule Rag.RerankerTest do
       assert length(results) == 3
     end
 
+    @tag :requires_llm_provider
     test "normalizes scores to 0-1 range when requested" do
       reranker = LLM.new()
       query = "test"
@@ -253,6 +263,7 @@ defmodule Rag.RerankerTest do
   end
 
   describe "integration with convenience function" do
+    @tag :requires_llm_provider
     test "works with LLM reranker through convenience function" do
       reranker = LLM.new()
       query = "What is Elixir?"

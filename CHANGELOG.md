@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## v0.3.3 (2025-12-21)
+
+### Fixes
+* Fixed CI test failures when running without API keys by adding
+  requires_llm_provider tag to tests that need auto-detected providers
+* Removed unused alias warning in pipeline_test.exs
+
 ## v0.3.2 (2025-12-21)
 
 ### Fixes
