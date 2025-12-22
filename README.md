@@ -5,12 +5,14 @@
 <h1 align="center">Rag</h1>
 
 <p align="center">
-  <a href="https://hex.pm/packages/rag"><img src="https://img.shields.io/hexpm/v/rag.svg?style=flat-square" alt="Hex.pm Version"></a>
-  <a href="https://hexdocs.pm/rag"><img src="https://img.shields.io/badge/hex-docs-blue.svg?style=flat-square" alt="Hex Docs"></a>
+  <a href="https://hex.pm/packages/rag_ex"><img src="https://img.shields.io/hexpm/v/rag_ex.svg?style=flat-square" alt="Hex.pm Version"></a>
+  <a href="https://hexdocs.pm/rag_ex"><img src="https://img.shields.io/badge/hex-docs-blue.svg?style=flat-square" alt="Hex Docs"></a>
   <a href="https://github.com/bitcrowd/rag/blob/main/LICENSE"><img src="https://img.shields.io/hexpm/l/rag.svg?style=flat-square" alt="License"></a>
 </p>
 
 <!-- README START -->
+
+> **Note:** This is a fork of [bitcrowd/rag](https://github.com/bitcrowd/rag). Credit to [bitcrowd](https://bitcrowd.net/en) for the original implementation.
 
 <p align="center">
 A library to build RAG (Retrieval Augmented Generation) systems in Elixir with multi-LLM support and agentic capabilities.
@@ -59,12 +61,12 @@ RAG addresses these issues by retrieving relevant information from an external k
 
 ## Installation
 
-Add `rag` to your list of dependencies in `mix.exs`:
+Add `rag_ex` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:rag, "~> 0.3.0"}
+    {:rag_ex, "~> 0.3.0"}
   ]
 end
 ```
@@ -743,7 +745,7 @@ Comprehensive guides are available for all major features:
 
 ## Links
 
-- [HexDocs](https://hexdocs.pm/rag)
+- [HexDocs](https://hexdocs.pm/rag_ex)
 - [Getting Started Notebook](/notebooks/getting_started.livemd)
 - [Guides](/guides/getting_started.md)
 

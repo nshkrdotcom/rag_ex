@@ -62,6 +62,7 @@ defmodule Rag.MixProject do
 
   defp package do
     [
+      name: "rag_ex",
       maintainers: ["@bitcrowd", "Joel Koch"],
       licenses: ["MIT"],
       files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE assets guides),
