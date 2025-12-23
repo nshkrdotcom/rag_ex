@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    {
+      "type": "module",
+      "name": "Orders",
+      "properties": {
+        "file": "lib/orders.ex"
+      }
+    }
+  ],
+  "edges": []
+}

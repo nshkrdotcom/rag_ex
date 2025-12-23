@@ -37,6 +37,28 @@ A library to build RAG (Retrieval Augmented Generation) systems in Elixir with m
 - **Community Detection**: Label propagation algorithm for entity clustering
 - **Graph Retrieval**: Local, global, and hybrid graph search modes
 
+## Graph Storage Backends
+
+rag_ex supports multiple graph storage backends:
+
+### PostgreSQL (Pgvector)
+
+The default backend using PostgreSQL with pgvector for both graph storage and vector similarity search.
+
+```elixir
+store = %Rag.GraphStore.Pgvector{repo: MyApp.Repo}
+```
+
+### RocksDB (TripleStore) - NEW in v0.4.0
+
+High-performance graph backend using RocksDB with RDF triple storage. Ideal for large graphs requiring fast traversal.
+
+```elixir
+{:ok, store} = Rag.GraphStore.TripleStore.open(data_dir: "data/graph")
+```
+
+See [Hybrid RAG Architecture](docs/20251222/hybrid-rag-triplestore/README.md) for details.
+
 ### Advanced Chunking (v0.3.4)
 - **Behavior-based chunking**: Pluggable `Rag.Chunker` strategies
 - **Byte positions**: `start_byte`/`end_byte` on every chunk
@@ -69,7 +91,7 @@ Add `rag_ex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:rag_ex, "~> 0.3.4"}
+    {:rag_ex, "~> 0.4.0"}
   ]
 end
 ```

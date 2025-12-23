@@ -88,6 +88,17 @@ run_example() {
     echo ""
 }
 
+run_triple_store_demo() {
+    echo "----------------------------------------"
+    echo "Running: triple_store_demo"
+    echo "----------------------------------------"
+    pushd "$SCRIPT_DIR/triple_store_demo" > /dev/null
+    mix deps.get
+    mix run -e "TripleStoreDemo.run()"
+    popd > /dev/null
+    echo ""
+}
+
 # ========================================
 # QUICK EXAMPLES (no DB, minimal API calls)
 # ========================================
@@ -95,6 +106,7 @@ run_example() {
 echo "=== Basic Examples ==="
 run_example "basic_chat.exs"
 run_example "routing_strategies.exs"
+run_triple_store_demo
 
 if [ "$QUICK" = true ]; then
     echo "========================================"
@@ -136,6 +148,7 @@ echo ""
 echo "Examples run:"
 echo "  - basic_chat.exs"
 echo "  - routing_strategies.exs"
+echo "  - triple_store_demo"
 echo "  - multi_llm_router.exs"
 echo "  - agent.exs"
 echo "  - chunking_strategies.exs"

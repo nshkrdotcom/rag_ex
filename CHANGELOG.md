@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## [0.4.0] - 2025-12-22
+
+### Added
+* `Rag.GraphStore.TripleStore` - RocksDB-backed graph storage using RDF triples
+* Hybrid RAG architecture support (PostgreSQL vectors + RocksDB graph)
+* `Rag.GraphStore.TripleStore.URI` - URI generation and parsing utilities
+* `Rag.GraphStore.TripleStore.Mapper` - Property Graph to RDF conversion
+* `Rag.GraphStore.TripleStore.Traversal` - BFS/DFS graph algorithms
+* `Rag.GraphStore.TripleStore.Supervisor` - OTP supervision
+* Triple store demo in examples/
+* Comprehensive documentation for Hybrid RAG integration
+
+### Changed
+* Bumped version to 0.4.0
+
+### Documentation
+* Added docs/20251222/hybrid-rag-triplestore/ with complete integration guide
+
 ## v0.3.4 (2025-12-21)
 
 ### Breaking Changes

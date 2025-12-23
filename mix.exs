@@ -2,7 +2,7 @@ defmodule Rag.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/nshkrdotcom/rag_ex"
-  @version "0.3.4"
+  @version "0.4.0"
 
   def project do
     [
@@ -50,6 +50,8 @@ defmodule Rag.MixProject do
       {:pgvector, "~> 0.3.0", optional: true},
       {:ecto_sql, "~> 3.0", optional: true},
       {:postgrex, "~> 0.17", optional: true},
+      {:triple_store,
+       github: "nshkrdotcom/triple_store", ref: "bc3a50cab6ea3136a60f1708dea27b297019c836"},
 
       # Dev/test
       # Temporarily disabled due to inflex Elixir 1.18 compatibility issue
@@ -162,6 +164,11 @@ defmodule Rag.MixProject do
           Rag.GraphStore.Edge,
           Rag.GraphStore.Community,
           Rag.GraphStore.Pgvector,
+          Rag.GraphStore.TripleStore,
+          Rag.GraphStore.TripleStore.URI,
+          Rag.GraphStore.TripleStore.Mapper,
+          Rag.GraphStore.TripleStore.Traversal,
+          Rag.GraphStore.TripleStore.Supervisor,
           Rag.GraphRAG.Extractor,
           Rag.GraphRAG.CommunityDetector
         ],

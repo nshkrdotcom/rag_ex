@@ -19,13 +19,10 @@ erl_crash.dump
 # Also ignore archive artifacts (built via "mix archive.build").
 *.ez
 
-# Ignore package tarball (built via "mix hex.build").
-rag-*.tar
-
 # Temporary files, for example, from tests.
 /tmp/
 
 # dialzyer
 /_plts/
-/text_chunker_ex/
-/triple_store/
+
+/priv/demo_graph/

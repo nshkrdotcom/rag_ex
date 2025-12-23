@@ -241,6 +241,27 @@ mix run examples/graph_rag.exs
 
 ---
 
+#### triple_store_demo/
+
+**Standalone demo of the RocksDB-backed graph store.**
+
+**Demonstrates:**
+- Creating nodes and edges with `Rag.GraphStore.TripleStore`
+- Neighbor queries and traversal
+- Community creation
+
+**Prerequisites:**
+- Rust toolchain (for the TripleStore NIF)
+
+**Run with:**
+```bash
+cd examples/triple_store_demo
+mix deps.get
+mix run -e "TripleStoreDemo.run()"
+```
+
+---
+
 ### Pipeline Examples
 
 #### pipeline_example.exs
