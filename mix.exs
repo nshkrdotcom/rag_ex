@@ -41,8 +41,8 @@ defmodule Rag.MixProject do
 
       # LLM providers - all optional
       {:gemini_ex, "~> 0.8.6"},
-      {:codex_sdk, "~> 0.4.2", optional: true},
-      {:claude_agent_sdk, "~> 0.6.8", optional: true},
+      {:codex_sdk, "~> 0.7.2", optional: true},
+      {:claude_agent_sdk, "~> 0.16.0", optional: true},
 
       # Vector store and search
       # TODO: Re-enable Torus once inflex dependency is fixed for Elixir 1.18
@@ -57,7 +57,7 @@ defmodule Rag.MixProject do
       # Temporarily disabled due to inflex Elixir 1.18 compatibility issue
       # {:igniter, "~> 0.5.7", runtime: false},
       {:mimic, "~> 2.2", only: :test},
-      {:ex_doc, "~> 0.31", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.40.0", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
@@ -68,7 +68,7 @@ defmodule Rag.MixProject do
       name: "rag_ex",
       maintainers: ["@nshkrdotcom", "NSHkr"],
       licenses: ["MIT"],
-      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE assets guides),
+      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE assets guides notebooks),
       links: %{
         GitHub: @source_url
       }
