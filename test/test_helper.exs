@@ -6,6 +6,10 @@ Mimic.copy(Rag.Router)
 Mimic.copy(Rag.Repo)
 Mimic.copy(Rag.GraphStoreTest.MockRepo)
 
+if Code.ensure_loaded?(Ash) do
+  Mimic.copy(Ash)
+end
+
 # Build exclusion list based on available credentials
 exclusions = [:integration_test, :integration]
 

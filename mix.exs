@@ -50,6 +50,7 @@ defmodule Rag.MixProject do
       {:pgvector, "~> 0.3.0", optional: true},
       {:ecto_sql, "~> 3.0", optional: true},
       {:postgrex, "~> 0.17", optional: true},
+      {:ash, "~> 3.0", optional: true},
       {:triple_store,
        github: "nshkrdotcom/triple_store", ref: "bc3a50cab6ea3136a60f1708dea27b297019c836"},
 
